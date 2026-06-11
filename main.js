@@ -147,12 +147,32 @@ ipcMain.handle('show-notification', (event, title, body) => {
     new Notification({ title, body, icon: path.join(__dirname, 'icon.ico') }).show();
 });
 
+ipcMain.on('update-tray-tooltip', (event, cpu, ram) => {
+    // console.log(`Received update-tray-tooltip: CPU ${cpu}%, RAM ${ram}%`);
+    if (tray) {
+        tray.setToolTip(`Tool Manager | CPU: ${cpu}% | RAM: ${ram}%`);
+    }
+});
+
 ipcMain.on('update-tray-menu', (event, tools) => {
     if (!tray) return;
 
     let template = [];
     
     if (tools && tools.length > 0) {
+        const hasRunning = tools.some(t => t.running);
+        if (hasRunning) {
+            template.push({
+                label: '🛑 Parar Tudo',
+                click: () => {
+                    if (mainWindow) {
+                        mainWindow.webContents.send('trigger-stop-all');
+                    }
+                }
+            });
+            template.push({ type: 'separator' });
+        }
+
         tools.forEach(tool => {
             const statusIcon = tool.running ? '🟢' : '⭕';
             template.push({

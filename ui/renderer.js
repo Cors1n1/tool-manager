@@ -96,8 +96,15 @@ async function fetchSystemInfo() {
         const res = await fetch(`${API_URL}/system-info`);
         if(res.ok) {
             const data = await res.json();
-            document.getElementById('dashCpu').innerText = `${data.cpu_percent.toFixed(1)}%`;
-            document.getElementById('dashRam').innerText = `${data.memory.percent.toFixed(1)}%`;
+            const cpu = data.cpu_percent.toFixed(1);
+            const ram = data.memory.percent.toFixed(1);
+            
+            document.getElementById('dashCpu').innerText = `${cpu}%`;
+            document.getElementById('dashRam').innerText = `${ram}%`;
+            
+            if (window.api && window.api.updateTrayTooltip) {
+                window.api.updateTrayTooltip(cpu, ram);
+            }
             
             let totalDisk = 0;
             let usedDisk = 0;
@@ -113,7 +120,7 @@ async function fetchSystemInfo() {
 fetchSystemInfo();
 setInterval(fetchSystemInfo, 2000);
 
-// Global toggle trigger from hotkeys
+// Global toggle trigger from IPC Listeners
 if (window.api && window.api.onTriggerToggle) {
     window.api.onTriggerToggle((event, payload) => {
         if (typeof payload === 'object') {
@@ -124,6 +131,17 @@ if (window.api && window.api.onTriggerToggle) {
             }
         } else {
             toggleTool(payload);
+        }
+    });
+}
+
+if (window.api && window.api.onTriggerStopAll) {
+    window.api.onTriggerStopAll(async () => {
+        try {
+            await fetch(`${API_URL}/tools/stop-all`, { method: 'POST' });
+            loadTools();
+        } catch(e) {
+            console.error('Failed to stop all tools', e);
         }
     });
 }

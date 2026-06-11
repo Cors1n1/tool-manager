@@ -62,6 +62,12 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 ## 📋 Histórico de Atualizações
 
 ### 🔄 Atualização (11/06/2026)
+- Implementada funcionalidade de "Parar Tudo" (Stop All) tanto no menu da bandeja quanto via backend.
+- Adicionada atualização em tempo real do tooltip da bandeja com o uso atual de CPU e RAM.
+- Adicionado campo `health_check_url` no `config.json` para futuras validações de serviços.
+- Melhorada a comunicação IPC para eventos de controle em lote, otimizando a responsividade da UI.
+
+### 🔄 Atualização (11/06/2026)
 - Implementado sistema completo de **Workspaces**: agora é possível criar grupos, renomear, deletar e controlar ferramentas em lote (iniciar/parar todas do grupo).
 - Refatoração do `backend.py` para incluir endpoints de gerenciamento de workspaces e melhorias no tratamento de logs (limpeza e persistência).
 - Aprimorado o mecanismo de encerramento de processos (`stop_tool`) utilizando `taskkill` com tratamento assíncrono para evitar bloqueios na UI.
@@ -78,4 +84,4 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 - Adicionada funcionalidade de alocação dinâmica de portas para processos.
 - Adicionado sistema de captura de logs em tempo real por ferramenta.
 - Implementado suporte a variáveis de ambiente (env_vars) e reordenação de ferramentas.
-- Melhorias na edição e gerenciamento de metadados das ferramentas (categorias, hotkeys).
+- Melhorias na edição e gerenciamento de metadados das ferramentas.

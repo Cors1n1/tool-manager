@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('api', {
     registerShortcuts: (map) => ipcRenderer.send('register-shortcuts', map),
     showNotification: (title, body) => ipcRenderer.invoke('show-notification', title, body),
     onTriggerToggle: (callback) => ipcRenderer.on('trigger-toggle', callback),
+    onTriggerStopAll: (callback) => ipcRenderer.on('trigger-stop-all', callback),
     getPathForFile: (file) => webUtils.getPathForFile(file),
-    updateTrayMenu: (tools) => ipcRenderer.send('update-tray-menu', tools)
+    updateTrayMenu: (tools) => ipcRenderer.send('update-tray-menu', tools),
+    updateTrayTooltip: (cpu, ram) => ipcRenderer.send('update-tray-tooltip', cpu, ram)
 });

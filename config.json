@@ -6,10 +6,11 @@
             "command": "C:\\Users\\Corsini\\Desktop\\git_auto\\Git Auto.lnk",
             "directory": "C:\\Users\\Corsini\\Desktop\\git_auto",
             "auto_start": false,
-            "category": "Geral",
+            "category": "",
             "env_vars": "",
             "hotkey": "",
-            "auto_port": false
+            "auto_port": true,
+            "health_check_url": ""
         }
     ],
     "workspaces": {}

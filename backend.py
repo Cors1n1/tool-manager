@@ -144,6 +144,12 @@ def delete_tool(tool_id):
     _write_config(config)
     return jsonify(config['tools'])
 
+@app.route('/tools/stop-all', methods=['POST'])
+def stop_all_tools():
+    for tid in list(processes.keys()):
+        stop_tool(tid)
+    return jsonify({"status": "ok"})
+
 @app.route('/tools/reorder', methods=['POST'])
 def reorder_tools():
     data = request.json
