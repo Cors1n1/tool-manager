@@ -18,16 +18,28 @@ processes = {}
 active_ports = {}  # tool_id -> int
 tool_logs = {}  # tool_id -> deque(maxlen=500)
 
-def find_free_port(start_port=8080):
-    port = start_port
-    while port <= 65535:
+def find_free_port(start_port=8080, max_port=9000):
+    for port in range(start_port, max_port):
+        # Prevent picking a port we just assigned in the same run
+        if port in active_ports.values():
+            continue
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.05)
             if s.connect_ex(('127.0.0.1', port)) != 0:
-                # Port is free, ensure we haven't assigned it recently to another process
-                if port not in active_ports.values():
-                    return port
-        port += 1
+                return port
     return None
+
+def stop_tool(tool_id):
+    if tool_id in processes:
+        proc = processes[tool_id]
+        parent = psutil.Process(proc.pid)
+        for child in parent.children(recursive=True):
+            child.terminate()
+        parent.terminate()
+        parent.wait(timeout=3)
+        del processes[tool_id]
+        if tool_id in active_ports:
+            del active_ports[tool_id]
 
 def _ensure_config():
     if not os.path.exists(CONFIG_FILE):
@@ -153,10 +165,87 @@ def reorder_tools():
     return jsonify(config['tools'])
 
 @app.route('/tools/<tool_id>/logs', methods=['GET'])
-def get_tool_logs(tool_id):
+def get_logs(tool_id):
     if tool_id in tool_logs:
-        return jsonify({"logs": list(tool_logs[tool_id])})
-    return jsonify({"logs": []})
+        return jsonify(list(tool_logs[tool_id]))
+    return jsonify([])
+
+@app.route('/tools/<tool_id>/logs', methods=['DELETE'])
+def clear_logs(tool_id):
+    if tool_id in tool_logs:
+        tool_logs[tool_id].clear()
+    return jsonify({"status": "cleared"})
+
+@app.route('/workspaces', methods=['GET'])
+def get_workspaces():
+    config = _read_config()
+    return jsonify(config.get('workspaces', {}))
+
+@app.route('/workspaces', methods=['POST'])
+def save_workspace():
+    data = request.json
+    config = _read_config()
+    if 'workspaces' not in config:
+        config['workspaces'] = {}
+    name = data.get('name')
+    if name:
+        config['workspaces'][name] = data
+        _write_config(config)
+    return jsonify(config.get('workspaces', {}))
+
+@app.route('/workspaces/<name>', methods=['DELETE'])
+def delete_workspace(name):
+    config = _read_config()
+    if 'workspaces' in config and name in config['workspaces']:
+        del config['workspaces'][name]
+        # Move tools to Geral
+        for t in config.get('tools', []):
+            if t.get('category') == name:
+                t['category'] = 'Geral'
+        _write_config(config)
+    return jsonify({"status": "deleted"})
+
+@app.route('/workspaces/<old_name>', methods=['PUT'])
+def rename_workspace(old_name):
+    data = request.json
+    new_name = data.get('new_name')
+    if not new_name or old_name == new_name:
+        return jsonify({"status": "ignored"})
+        
+    config = _read_config()
+    if 'workspaces' in config and old_name in config['workspaces']:
+        ws_data = config['workspaces'].pop(old_name)
+        ws_data['name'] = new_name
+        config['workspaces'][new_name] = ws_data
+        
+        # Update tools
+        for t in config.get('tools', []):
+            if t.get('category') == old_name:
+                t['category'] = new_name
+        
+        _write_config(config)
+    return jsonify({"status": "renamed"})
+
+@app.route('/workspaces/<name>/toggle', methods=['POST'])
+def toggle_workspace_route(name):
+    action = request.json.get('action', 'toggle') # 'start', 'stop', or 'toggle'
+    config = _read_config()
+    tools_in_ws = [t for t in config['tools'] if t.get('category', 'Geral') == name]
+    
+    # Determine toggle action: if any tool is stopped, start all. If all running, stop all.
+    if action == 'toggle':
+        any_stopped = any(t['id'] not in processes or processes[t['id']].poll() is not None for t in tools_in_ws)
+        action = 'start' if any_stopped else 'stop'
+        
+    for t in tools_in_ws:
+        tid = t['id']
+        running = tid in processes and processes[tid].poll() is None
+        if action == 'start' and not running:
+            toggle_tool(tid)
+        elif action == 'stop' and running:
+            stop_tool(tid)
+            
+    return jsonify({"status": "ok"})
 
 def read_output(process, tool_id):
     for line in iter(process.stdout.readline, ''):
@@ -237,12 +326,15 @@ def toggle_tool(tool_id):
                 tool_logs[tool_id].append(f"Error starting tool: {e}\n")
     return get_tools()
 
+def _kill_process(pid):
+    subprocess.run(['taskkill', '/F', '/T', '/PID', str(pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 def stop_tool(tool_id):
     if tool_id in processes:
         p = processes[tool_id]
         if p.poll() is None:
             if os.name == 'nt':
-                subprocess.run(['taskkill', '/F', '/T', '/PID', str(p.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                threading.Thread(target=_kill_process, args=(p.pid,), daemon=True).start()
             else:
                 p.terminate()
         del processes[tool_id]

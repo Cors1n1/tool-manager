@@ -1,7 +1,7 @@
 {
     "tools": [
         {
-            "id": "f08db5db-c1d1-40d6-86d5-8456b2a2b0bd",
+            "id": "f80837ea-f081-4574-a665-a96e454d3668",
             "name": "Git Auto",
             "command": "C:\\Users\\Corsini\\Desktop\\git_auto\\Git Auto.lnk",
             "directory": "C:\\Users\\Corsini\\Desktop\\git_auto",
@@ -9,7 +9,8 @@
             "category": "Geral",
             "env_vars": "",
             "hotkey": "",
-            "auto_port": true
+            "auto_port": false
         }
-    ]
+    ],
+    "workspaces": {}
 }

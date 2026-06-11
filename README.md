@@ -12,6 +12,7 @@ O Tool Manager é um gerenciador de ferramentas desktop que permite organizar, i
 * **Resolução Inteligente**: Suporta atalhos `.lnk` (Windows), resolvendo automaticamente argumentos e diretórios de trabalho.
 * **Monitoramento de Recursos**: Painel de visualização de uso de CPU, memória e discos.
 * **Personalização Visual**: Suporte a múltiplos temas de cores (vibes) via menu de interface.
+* **Gerenciamento de Workspaces**: Agrupamento lógico de ferramentas com controle em lote (iniciar/parar todo o grupo).
 
 ## Instalação e Configuração
 
@@ -56,8 +57,16 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 3. Utilize a interface para adicionar o caminho do executável, configurar variáveis de ambiente e definir categorias.
 4. O menu de contexto da bandeja (clique com botão direito no ícone) agora exibe o status em tempo real de suas ferramentas (🟢 rodando / ⭕ parado).
 5. Personalize a aparência da interface utilizando o botão de paleta de cores no topo da janela.
+6. Gerencie seus projetos através da aba de Workspaces, permitindo ligar/desligar conjuntos inteiros de ferramentas com um clique.
 
 ## 📋 Histórico de Atualizações
+
+### 🔄 Atualização (11/06/2026)
+- Implementado sistema completo de **Workspaces**: agora é possível criar grupos, renomear, deletar e controlar ferramentas em lote (iniciar/parar todas do grupo).
+- Refatoração do `backend.py` para incluir endpoints de gerenciamento de workspaces e melhorias no tratamento de logs (limpeza e persistência).
+- Aprimorado o mecanismo de encerramento de processos (`stop_tool`) utilizando `taskkill` com tratamento assíncrono para evitar bloqueios na UI.
+- Ajuste na busca de portas livres (`find_free_port`) para evitar conflitos de atribuição em execuções rápidas.
+- Adicionada integração de logs entre console do Electron e interface.
 
 ### 🔄 Atualização (11/06/2026)
 - Adicionado menu de contexto dinâmico na bandeja do sistema (Tray) que reflete o estado atual das ferramentas.

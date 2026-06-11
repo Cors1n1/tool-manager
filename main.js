@@ -54,6 +54,10 @@ function createWindow() {
     });
 
     mainWindow.loadFile(path.join(__dirname, 'ui', 'index.html'));
+
+    mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+        console.log(`[Renderer] ${message} (at ${sourceId}:${line})`);
+    });
     
     // Prevent the window from being destroyed when closed (e.g. Alt+F4 or taskbar close)
     mainWindow.on('close', function (event) {
@@ -113,10 +117,13 @@ ipcMain.handle('toggle-always-on-top', (event, isPinned) => {
 
 ipcMain.handle('app-quit', () => {
     isQuiting = true;
+    app.quit();
+});
+
+app.on('will-quit', () => {
     if (pythonProcess) {
         try { exec(`taskkill /pid ${pythonProcess.pid} /T /F`); } catch(e) {}
     }
-    app.quit();
 });
 
 ipcMain.on('register-shortcuts', (event, shortcutsMap) => {
