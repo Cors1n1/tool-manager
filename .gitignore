@@ -1,0 +1,104 @@
+# Ambiente / SO
+.env
+.env.*
+.flaskenv*
+.flasken
+!.env.example
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+build/
+dist/
+*.egg-info/
+*.log
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+build/
+dist/
+coverage/
+
+# Java
+*.class
+*.log
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+target/
+build/
+.gradle/
+
+# C++
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.out
+*.app
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+bin/
+build/
+
+# React / Next.js
+node_modules/
+.pnp
+.pnp.js
+coverage/
+build/
+.next/
+out/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Godot
+.godot/
+*.translation
+export_presets.cfg
+
+# Unity
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+
+# Generic
+build/
+dist/
+*.log
+tmp/

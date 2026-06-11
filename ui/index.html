@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Manager Widget</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="widget-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">
+                <i class="fa-solid fa-bolt" style="color: var(--accent); margin-right: 5px;"></i> Tools
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="openAddModal()" title="Adicionar"><i class="fa-solid fa-plus"></i></button>
+                <button class="icon-btn" onclick="window.api.minimize()" title="Esconder na Bandeja"><i class="fa-solid fa-minus"></i></button>
+                <button class="icon-btn" onclick="quitApp()" title="Encerrar Totalmente"><i class="fa-solid fa-power-off"></i></button>
+            </div>
+        </div>
+
+        <!-- Tool List -->
+        <div class="tool-list" id="tool-list-container">
+            <!-- Items Injected via JS -->
+        </div>
+    </div>
+
+    <!-- Add Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                Adicionar Ferramenta
+                <i class="fa-solid fa-xmark close-icon" onclick="closeAddModal()"></i>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="toolName" placeholder="Nome (ex: Git Auto)">
+                <div class="input-group">
+                    <input type="text" id="toolDir" placeholder="Pasta raiz (opcional)">
+                    <button class="browse-btn" onclick="browseDir()" title="Selecionar Pasta"><i class="fa-solid fa-folder-open"></i></button>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="toolCommand" placeholder="Comando / Caminho">
+                    <button class="browse-btn" onclick="browseFile()" title="Selecionar Arquivo"><i class="fa-solid fa-file"></i></button>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="addTool()">Salvar</button>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
