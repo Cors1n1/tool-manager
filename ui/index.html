@@ -15,6 +15,22 @@
                 <i class="fa-solid fa-bolt" style="color: var(--accent); margin-right: 5px;"></i> Tools
             </div>
             <div class="header-actions">
+                <div class="theme-menu-container" style="position: relative; -webkit-app-region: no-drag;">
+                    <button class="icon-btn" onclick="toggleThemeMenu()" title="Escolher Tema"><i class="fa-solid fa-palette"></i></button>
+                    <div id="themeMenu" style="display: none; position: absolute; top: 120%; right: 0; background: rgba(20, 20, 26, 0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; width: 140px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(10px);">
+                        <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; font-weight: 600; text-align: center;">Escolha a Vibe</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; justify-items: center;">
+                            <div class="theme-swatch" style="background: rgb(0, 229, 255);" onclick="setTheme('0, 229, 255'); toggleThemeMenu();" title="Neon Cyan"></div>
+                            <div class="theme-swatch" style="background: rgb(255, 0, 255);" onclick="setTheme('255, 0, 255'); toggleThemeMenu();" title="Cyberpunk"></div>
+                            <div class="theme-swatch" style="background: rgb(0, 255, 170);" onclick="setTheme('0, 255, 170'); toggleThemeMenu();" title="Matrix"></div>
+                            <div class="theme-swatch" style="background: rgb(255, 136, 0);" onclick="setTheme('255, 136, 0'); toggleThemeMenu();" title="Volcano"></div>
+                            <div class="theme-swatch" style="background: rgb(255, 74, 74);" onclick="setTheme('255, 74, 74'); toggleThemeMenu();" title="Ruby"></div>
+                            <div class="theme-swatch" style="background: rgb(255, 215, 0);" onclick="setTheme('255, 215, 0'); toggleThemeMenu();" title="Gold"></div>
+                            <div class="theme-swatch" style="background: rgb(155, 89, 182);" onclick="setTheme('155, 89, 182'); toggleThemeMenu();" title="Amethyst"></div>
+                            <div class="theme-swatch" style="background: rgb(255, 255, 255);" onclick="setTheme('255, 255, 255'); toggleThemeMenu();" title="Monochrome"></div>
+                        </div>
+                    </div>
+                </div>
                 <button class="icon-btn" id="pinBtn" onclick="togglePin()" title="Fixar Janela (Always on top)"><i class="fa-solid fa-thumbtack"></i></button>
                 <button class="icon-btn" onclick="openAddModal()" title="Adicionar"><i class="fa-solid fa-plus"></i></button>
                 <button class="icon-btn" onclick="window.api.minimize()" title="Esconder na Bandeja"><i class="fa-solid fa-minus"></i></button>

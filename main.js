@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Tray, nativeImage, screen, dialog, globalShortcut, Notification } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, nativeImage, screen, dialog, globalShortcut, Notification, Menu } = require('electron');
 const path = require('path');
 const { spawn, exec } = require('child_process');
 
@@ -11,6 +11,14 @@ function createTray() {
     const icon = nativeImage.createFromPath(iconPath);
     tray = new Tray(icon);
     tray.setToolTip('Tool Manager');
+    
+    const initialMenu = Menu.buildFromTemplate([
+        { label: 'Abrir Tool Manager', click: () => { mainWindow.show(); mainWindow.focus(); } },
+        { type: 'separator' },
+        { label: 'Sair', click: () => app.quit() }
+    ]);
+    tray.setContextMenu(initialMenu);
+    
     tray.on('click', (event, bounds) => {
         toggleWindow(bounds);
     });
@@ -130,6 +138,36 @@ ipcMain.on('register-shortcuts', (event, shortcutsMap) => {
 
 ipcMain.handle('show-notification', (event, title, body) => {
     new Notification({ title, body, icon: path.join(__dirname, 'icon.ico') }).show();
+});
+
+ipcMain.on('update-tray-menu', (event, tools) => {
+    if (!tray) return;
+
+    let template = [];
+    
+    if (tools && tools.length > 0) {
+        tools.forEach(tool => {
+            const statusIcon = tool.running ? '🟢' : '⭕';
+            template.push({
+                label: `${statusIcon} ${tool.name}`,
+                click: () => {
+                    if (mainWindow) {
+                        mainWindow.webContents.send('trigger-toggle', tool.id);
+                    }
+                }
+            });
+        });
+        template.push({ type: 'separator' });
+    } else {
+        template.push({ label: 'Nenhuma ferramenta', enabled: false });
+        template.push({ type: 'separator' });
+    }
+    
+    template.push({ label: 'Abrir Tool Manager', click: () => { mainWindow.show(); mainWindow.focus(); } });
+    template.push({ label: 'Sair', click: () => { isQuiting = true; app.quit(); } });
+    
+    const contextMenu = Menu.buildFromTemplate(template);
+    tray.setContextMenu(contextMenu);
 });
 
 app.on('will-quit', () => {

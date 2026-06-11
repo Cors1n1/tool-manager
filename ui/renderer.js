@@ -5,6 +5,35 @@ let activeLogsToolId = null;
 let logsInterval = null;
 let isPinned = localStorage.getItem('isPinned') === 'true';
 
+// Load saved theme
+const savedTheme = localStorage.getItem('themeColor');
+if (savedTheme) {
+    document.documentElement.style.setProperty('--accent-rgb', savedTheme);
+}
+
+// Dropdown Logic
+function toggleThemeMenu() {
+    const menu = document.getElementById('themeMenu');
+    if (menu) {
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+// Close dropdown if clicked outside
+document.addEventListener('click', (e) => {
+    const container = document.querySelector('.theme-menu-container');
+    const menu = document.getElementById('themeMenu');
+    if (container && !container.contains(e.target) && menu && menu.style.display === 'block') {
+        menu.style.display = 'none';
+    }
+});
+
+// Theme Change Function
+function setTheme(rgbString) {
+    document.documentElement.style.setProperty('--accent-rgb', rgbString);
+    localStorage.setItem('themeColor', rgbString);
+}
+
 setTimeout(() => {
     if (isPinned) {
         const btn = document.getElementById('pinBtn');
@@ -96,6 +125,13 @@ async function loadTools() {
         if(res.ok) {
             tools = await res.json();
             
+            const currentStateString = JSON.stringify(tools);
+            let stateChanged = false;
+            if (window.lastToolsState !== currentStateString) {
+                stateChanged = true;
+                window.lastToolsState = currentStateString;
+            }
+
             // Check for state changes for notifications
             let shortcutsMap = {};
             tools.forEach(t => {
@@ -116,7 +152,13 @@ async function loadTools() {
                 window.api.registerShortcuts(shortcutsMap);
             }
             
-            renderTools();
+            if (window.api && window.api.updateTrayMenu && stateChanged) {
+                window.api.updateTrayMenu(tools);
+            }
+            
+            if (stateChanged) {
+                renderTools();
+            }
         }
     } catch(e) {
         // Backend not ready or offline

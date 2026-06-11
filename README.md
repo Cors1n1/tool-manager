@@ -11,6 +11,7 @@ O Tool Manager é um gerenciador de ferramentas desktop que permite organizar, i
 * **Automação de Rede**: Atribuição automática de portas livres para processos que necessitam.
 * **Resolução Inteligente**: Suporta atalhos `.lnk` (Windows), resolvendo automaticamente argumentos e diretórios de trabalho.
 * **Monitoramento de Recursos**: Painel de visualização de uso de CPU, memória e discos.
+* **Personalização Visual**: Suporte a múltiplos temas de cores (vibes) via menu de interface.
 
 ## Instalação e Configuração
 
@@ -28,16 +29,19 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 
 ```text
 .
-├── ui              # Frontend (HTML, CSS, JS)
-├── .gitignore      # Arquivos ignorados pelo Git
-├── README.md       # Documentação do projeto
-├── backend.py      # Servidor Flask (Gerenciamento de processos e logs)
-├── config.json     # Persistência de dados (Configurações das ferramentas)
-├── icon.ico        # Ícone da aplicação
-├── main.js         # Processo principal do Electron
+├── ui
+│   ├── index.html
+│   ├── renderer.js
+│   └── style.css
+├── .gitignore
+├── README.md
+├── backend.py
+├── config.json
+├── icon.ico
+├── main.js
 ├── package-lock.json
-├── package.json    # Dependências Node.js
-└── preload.js      # Ponte entre Electron e renderizador
+├── package.json
+└── preload.js
 ```
 
 ## Dependências
@@ -50,12 +54,17 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 1. O ícone aparecerá na bandeja do sistema após a execução.
 2. Clique no ícone para alternar a visibilidade da janela.
 3. Utilize a interface para adicionar o caminho do executável, configurar variáveis de ambiente e definir categorias.
-4. O sistema irá gerenciar automaticamente a alocação de portas caso a opção `auto_port` esteja ativa.
-5. Acesse a aba de logs para depuração de processos em execução e o painel de sistema para verificar o consumo de hardware.
+4. O menu de contexto da bandeja (clique com botão direito no ícone) agora exibe o status em tempo real de suas ferramentas (🟢 rodando / ⭕ parado).
+5. Personalize a aparência da interface utilizando o botão de paleta de cores no topo da janela.
 
 ## 📋 Histórico de Atualizações
 
 ### 🔄 Atualização (11/06/2026)
+- Adicionado menu de contexto dinâmico na bandeja do sistema (Tray) que reflete o estado atual das ferramentas.
+- Implementado sistema de seleção de temas (vibes) com persistência via `localStorage`.
+- Otimização do processo de renderização e comunicação IPC para atualização do menu da bandeja.
+
+### 🔄 Atualização (01/06/2026)
 - Implementado sistema de monitoramento de recursos do sistema (CPU/RAM/Disk).
 - Adicionada funcionalidade de alocação dinâmica de portas para processos.
 - Adicionado sistema de captura de logs em tempo real por ferramenta.
