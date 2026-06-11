@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Tray, nativeImage, screen, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, nativeImage, screen, dialog, globalShortcut, Notification } = require('electron');
 const path = require('path');
 const { spawn, exec } = require('child_process');
 
@@ -97,10 +97,41 @@ ipcMain.handle('dialog-open-dir', async () => {
 // Explicit handlers
 ipcMain.handle('window-minimize', () => mainWindow.hide());
 
+ipcMain.handle('toggle-always-on-top', (event, isPinned) => {
+    if (mainWindow) {
+        mainWindow.setAlwaysOnTop(isPinned, 'screen-saver');
+    }
+});
+
 ipcMain.handle('app-quit', () => {
     isQuiting = true;
     if (pythonProcess) {
         try { exec(`taskkill /pid ${pythonProcess.pid} /T /F`); } catch(e) {}
     }
     app.quit();
+});
+
+ipcMain.on('register-shortcuts', (event, shortcutsMap) => {
+    globalShortcut.unregisterAll();
+    for (const [hotkey, toolId] of Object.entries(shortcutsMap)) {
+        if (hotkey && hotkey.trim() !== '') {
+            try {
+                globalShortcut.register(hotkey, () => {
+                    if (mainWindow) {
+                        mainWindow.webContents.send('trigger-toggle', toolId);
+                    }
+                });
+            } catch (e) {
+                console.error(`Failed to register shortcut ${hotkey}:`, e);
+            }
+        }
+    }
+});
+
+ipcMain.handle('show-notification', (event, title, body) => {
+    new Notification({ title, body, icon: path.join(__dirname, 'icon.ico') }).show();
+});
+
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
 });

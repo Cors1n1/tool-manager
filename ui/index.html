@@ -15,9 +15,23 @@
                 <i class="fa-solid fa-bolt" style="color: var(--accent); margin-right: 5px;"></i> Tools
             </div>
             <div class="header-actions">
+                <button class="icon-btn" id="pinBtn" onclick="togglePin()" title="Fixar Janela (Always on top)"><i class="fa-solid fa-thumbtack"></i></button>
                 <button class="icon-btn" onclick="openAddModal()" title="Adicionar"><i class="fa-solid fa-plus"></i></button>
                 <button class="icon-btn" onclick="window.api.minimize()" title="Esconder na Bandeja"><i class="fa-solid fa-minus"></i></button>
                 <button class="icon-btn" onclick="quitApp()" title="Encerrar Totalmente"><i class="fa-solid fa-power-off"></i></button>
+            </div>
+        </div>
+
+        <!-- Premium System Dashboard -->
+        <div class="system-dashboard">
+            <div class="dash-main">
+                <div class="dash-time" id="dashTime" title="Horário Local Atual">--:--:--</div>
+                <div class="dash-weather" id="dashWeather" title="Clima e Temperatura (Baseado na sua localização)"><i class="fa-solid fa-cloud"></i> --°C</div>
+            </div>
+            <div class="dash-metrics">
+                <div class="metric-chip" title="Processador (CPU): Mostra a porcentagem atual de uso do seu processador."><i class="fa-solid fa-microchip"></i> <span id="dashCpu">--%</span></div>
+                <div class="metric-chip" title="Memória RAM: Mostra a porcentagem de memória do sistema ocupada no momento."><i class="fa-solid fa-memory"></i> <span id="dashRam">--%</span></div>
+                <div class="metric-chip" title="Armazenamento de Disco: Mostra o percentual de espaço utilizado (somando todos os seus HDs/SSDs)."><i class="fa-solid fa-hard-drive"></i> <span id="dashDisk">--%</span></div>
             </div>
         </div>
 
@@ -34,18 +48,77 @@
                 Adicionar Ferramenta
                 <i class="fa-solid fa-xmark close-icon" onclick="closeAddModal()"></i>
             </div>
-            <div class="modal-body">
-                <input type="text" id="toolName" placeholder="Nome (ex: Git Auto)">
-                <div class="input-group">
-                    <input type="text" id="toolDir" placeholder="Pasta raiz (opcional)">
-                    <button class="browse-btn" onclick="browseDir()" title="Selecionar Pasta"><i class="fa-solid fa-folder-open"></i></button>
+            <div class="modal-body form-layout">
+                <input type="hidden" id="toolId">
+                
+                <div class="form-section">Informações Básicas</div>
+                <div class="form-group">
+                    <label>Nome do Aplicativo <span class="required">*</span></label>
+                    <input type="text" id="toolName" placeholder="Ex: Meu Servidor Node">
                 </div>
-                <div class="input-group">
-                    <input type="text" id="toolCommand" placeholder="Comando / Caminho">
-                    <button class="browse-btn" onclick="browseFile()" title="Selecionar Arquivo"><i class="fa-solid fa-file"></i></button>
+
+                <div class="form-group">
+                    <label>Comando de Execução <span class="required">*</span></label>
+                    <div class="input-group">
+                        <input type="text" id="toolCommand" placeholder="Ex: npm run dev, python main.py">
+                        <button class="browse-btn" onclick="browseFile()" title="Procurar Arquivo"><i class="fa-solid fa-file"></i></button>
+                    </div>
                 </div>
+
+                <div class="form-group">
+                    <label>Diretório Raiz (Opcional)</label>
+                    <div class="input-group">
+                        <input type="text" id="toolDir" placeholder="Onde o comando deve rodar?">
+                        <button class="browse-btn" onclick="browseDir()" title="Selecionar Pasta"><i class="fa-solid fa-folder-open"></i></button>
+                    </div>
+                </div>
+
+                <div class="form-section">Configurações Inteligentes</div>
+                <div class="checkbox-group">
+                    <label class="check-label" title="Inicia a ferramenta automaticamente ao abrir o Tool Manager">
+                        <input type="checkbox" id="toolAutoStart">
+                        <div class="check-text">
+                            <strong>Auto-Start</strong>
+                            <span>Iniciar com o app</span>
+                        </div>
+                    </label>
+                    <label class="check-label" title="Acha uma porta livre (8080+) e passa como a variável PORT">
+                        <input type="checkbox" id="toolAutoPort">
+                        <div class="check-text">
+                            <strong style="color: var(--accent);">Auto-Port</strong>
+                            <span>Gerar porta dinâmica</span>
+                        </div>
+                    </label>
+                </div>
+
+                <details class="advanced-options">
+                    <summary><i class="fa-solid fa-sliders"></i> Opções Avançadas</summary>
+                    <div class="advanced-content">
+                        <div class="form-group">
+                            <label>Atalho de Teclado Global</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="toolHotkey" placeholder="Nenhum atalho definido" readonly style="cursor: default;">
+                                <button type="button" id="recordHotkeyBtn" onclick="toggleHotkeyRecord()" class="btn" style="padding: 0 15px; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.1);">Gravar</button>
+                                <button type="button" onclick="clearHotkey()" class="btn" style="padding: 0 15px; border-radius: 8px; background: rgba(255,74,74,0.1); color: var(--danger); border: 1px solid rgba(255,74,74,0.2);" title="Limpar Atalho"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </details>
             </div>
             <button class="btn btn-primary" onclick="addTool()">Salvar</button>
+        </div>
+    </div>
+
+    <!-- Logs Modal -->
+    <div class="modal-overlay" id="logsModal">
+        <div class="modal logs-modal" style="width: 500px; max-width: 90vw;">
+            <div class="modal-header">
+                Logs: <span id="logsToolName"></span>
+                <i class="fa-solid fa-xmark close-icon" onclick="closeLogsModal()"></i>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <div id="logsConsole" style="background: #0c0c0c; color: #00ffaa; font-family: 'Courier New', Courier, monospace; height: 300px; overflow-y: auto; padding: 10px; font-size: 12px; white-space: pre-wrap; border-radius: 0 0 14px 14px;"></div>
+            </div>
         </div>
     </div>
 

@@ -1,8 +1,13 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
     minimize: () => ipcRenderer.invoke('window-minimize'),
     quit: () => ipcRenderer.invoke('app-quit'),
     openFileDialog: () => ipcRenderer.invoke('dialog-open-file'),
-    openDirDialog: () => ipcRenderer.invoke('dialog-open-dir')
+    openDirDialog: () => ipcRenderer.invoke('dialog-open-dir'),
+    toggleAlwaysOnTop: (isPinned) => ipcRenderer.invoke('toggle-always-on-top', isPinned),
+    registerShortcuts: (map) => ipcRenderer.send('register-shortcuts', map),
+    showNotification: (title, body) => ipcRenderer.invoke('show-notification', title, body),
+    onTriggerToggle: (callback) => ipcRenderer.on('trigger-toggle', callback),
+    getPathForFile: (file) => webUtils.getPathForFile(file)
 });
