@@ -8,12 +8,17 @@ import threading
 import time
 import secrets
 import psutil
+import base64
 import requests as http_requests
 from collections import deque
 from urllib.parse import urlencode
 from flask import Flask, request, jsonify, redirect, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
+import logging
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 load_dotenv()
 
@@ -44,12 +49,18 @@ def _refresh_spotify_token():
     token_data = _read_spotify_token()
     if not token_data or 'refresh_token' not in token_data:
         return None
+        
+    auth_str = f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}"
+    b64_auth = base64.b64encode(auth_str.encode()).decode()
+    
     resp = http_requests.post('https://accounts.spotify.com/api/token', data={
         'grant_type': 'refresh_token',
-        'refresh_token': token_data['refresh_token'],
-        'client_id': SPOTIFY_CLIENT_ID,
-        'client_secret': SPOTIFY_CLIENT_SECRET,
+        'refresh_token': token_data['refresh_token']
+    }, headers={
+        'Authorization': f'Basic {b64_auth}',
+        'Content-Type': 'application/x-www-form-urlencoded'
     })
+    
     if resp.status_code == 200:
         new_data = resp.json()
         new_data['refresh_token'] = token_data.get('refresh_token')
@@ -96,12 +107,16 @@ def spotify_callback():
     error = request.args.get('error')
     if error:
         return f'<html><body style="background:#111;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh"><h2>Erro: {error}</h2></body></html>'
+    auth_str = f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}"
+    b64_auth = base64.b64encode(auth_str.encode()).decode()
+
     resp = http_requests.post('https://accounts.spotify.com/api/token', data={
         'grant_type': 'authorization_code',
         'code': code,
-        'redirect_uri': SPOTIFY_REDIRECT_URI,
-        'client_id': SPOTIFY_CLIENT_ID,
-        'client_secret': SPOTIFY_CLIENT_SECRET,
+        'redirect_uri': SPOTIFY_REDIRECT_URI
+    }, headers={
+        'Authorization': f'Basic {b64_auth}',
+        'Content-Type': 'application/x-www-form-urlencoded'
     })
     if resp.status_code == 200:
         _save_spotify_token(resp.json())
@@ -333,29 +348,38 @@ def get_tools():
             tool['active_port'] = active_ports[tool['id']]
     return jsonify(config['tools'])
 
+last_disk_check = 0
+cached_disks = []
+
 @app.route('/system-info', methods=['GET'])
 def get_system_info():
-    # interval=0.1 garante que a leitura da CPU seja precisa, bloqueando por apenas 100ms
-    cpu = psutil.cpu_percent(interval=0.1)
+    global last_disk_check, cached_disks
+    # interval=None garante que a leitura não bloqueie a thread, retornando a média desde a última chamada
+    cpu = psutil.cpu_percent(interval=None)
     mem = psutil.virtual_memory()
     
-    disks = []
-    for part in psutil.disk_partitions(all=False):
-        if os.name == 'nt':
-            if 'cdrom' in part.opts or part.fstype == '':
-                continue
-        try:
-            usage = psutil.disk_usage(part.mountpoint)
-            disks.append({
-                "device": part.device,
-                "mountpoint": part.mountpoint,
-                "total": usage.total,
-                "used": usage.used,
-                "free": usage.free,
-                "percent": usage.percent
-            })
-        except Exception:
-            pass
+    current_time = time.time()
+    # Atualiza o uso de disco apenas a cada 60s para não bloquear caso haja drives de rede
+    if current_time - last_disk_check > 60:
+        disks = []
+        for part in psutil.disk_partitions(all=False):
+            if os.name == 'nt':
+                if 'cdrom' in part.opts or part.fstype == '':
+                    continue
+            try:
+                usage = psutil.disk_usage(part.mountpoint)
+                disks.append({
+                    "device": part.device,
+                    "mountpoint": part.mountpoint,
+                    "total": usage.total,
+                    "used": usage.used,
+                    "free": usage.free,
+                    "percent": usage.percent
+                })
+            except Exception:
+                pass
+        cached_disks = disks
+        last_disk_check = current_time
             
     return jsonify({
         "cpu_percent": cpu,
@@ -364,7 +388,7 @@ def get_system_info():
             "used": mem.used,
             "percent": mem.percent
         },
-        "disks": disks
+        "disks": cached_disks
     })
 
 @app.route('/tools', methods=['POST'])
@@ -625,5 +649,7 @@ def start_auto_tools():
                 toggle_tool(tool['id'])
 
 if __name__ == '__main__':
+    # Initial call to set baseline for cpu_percent(interval=None)
+    psutil.cpu_percent(interval=None)
     start_auto_tools()
     app.run(port=5555, debug=False)

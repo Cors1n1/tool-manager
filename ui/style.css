@@ -26,6 +26,36 @@ body {
     padding: 12px;
 }
 
+#loadingOverlay {
+    position: absolute;
+    top: 12px; left: 12px; right: 12px; bottom: 12px;
+    background: var(--bg-main);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 16px;
+    transition: opacity 0.5s ease;
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+}
+#loadingOverlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.loader-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(var(--accent-rgb), 0.2);
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+
 .widget-container {
     background: var(--bg-main);
     backdrop-filter: blur(25px);

@@ -66,3 +66,59 @@ async function saveEnvFile() {
         statusMsg.style.color = '#ff4a4a';
     }
 }
+
+// --- App Hotkey Logic ---
+document.addEventListener('DOMContentLoaded', () => {
+    const hk = localStorage.getItem('appHotkey') || '';
+    document.getElementById('appHotkeyInput').value = hk;
+});
+
+let isRecordingAppHotkey = false;
+function toggleAppHotkeyRecord() {
+    isRecordingAppHotkey = !isRecordingAppHotkey;
+    const btn = document.getElementById('recordAppHotkeyBtn');
+    const input = document.getElementById('appHotkeyInput');
+    
+    if (isRecordingAppHotkey) {
+        btn.innerText = 'Gravando...';
+        btn.style.color = 'var(--danger)';
+        input.value = '';
+        input.placeholder = 'Pressione as teclas...';
+    } else {
+        btn.innerText = 'Gravar';
+        btn.style.color = 'var(--text-primary)';
+        input.placeholder = 'Nenhum atalho';
+    }
+}
+
+function clearAppHotkey() {
+    document.getElementById('appHotkeyInput').value = '';
+    saveAppHotkey('');
+}
+
+function saveAppHotkey(hk) {
+    localStorage.setItem('appHotkey', hk);
+    if (window.api && window.api.updateAppHotkey) {
+        window.api.updateAppHotkey();
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (isRecordingAppHotkey) {
+        e.preventDefault();
+        const keys = [];
+        if (e.ctrlKey) keys.push('CommandOrControl');
+        if (e.altKey) keys.push('Alt');
+        if (e.shiftKey) keys.push('Shift');
+        
+        let key = e.key;
+        if (key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta') return;
+        if (key.length === 1) key = key.toUpperCase();
+        
+        keys.push(key);
+        const hotkeyStr = keys.join('+');
+        document.getElementById('appHotkeyInput').value = hotkeyStr;
+        toggleAppHotkeyRecord();
+        saveAppHotkey(hotkeyStr);
+    }
+});

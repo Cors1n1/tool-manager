@@ -58,7 +58,7 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 ## Dependências
 
 * **Backend**: `flask`, `flask-cors`, `psutil`, `requests`, `python-dotenv`.
-* **Frontend**: `electron`, `chrome-paths`, `puppeteer-core`.
+* **Frontend**: `electron`, `chrome-paths`, `puppeteer-core` (^25.1.0).
 
 ## Como utilizar
 
@@ -70,6 +70,12 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 6. Para o Spotify, utilize a seção de autenticação nas configurações para conectar sua conta e habilitar o player integrado.
 
 ## 📋 Histórico de Atualizações
+
+### 🔄 Atualização (12/06/2026)
+- Otimização do backend: Adicionado `logging` silencioso e refatoração da autenticação Spotify para usar `Basic Auth` em headers.
+- Melhoria no sistema de monitoramento: `psutil` configurado para não bloquear a thread principal; cache de disco implementado com expiração de 60s.
+- Atualização do `main.js`: Implementado estado de persistência para "Always on Top" e suporte a alternância da janela via hotkey global.
+- Refatoração do `main.js` para garantir que o processo Python seja iniciado silenciosamente (`stdio: 'ignore'`).
 
 ### 🔄 Atualização (11/06/2026)
 - Implementado sistema de edição de variáveis de ambiente (`.env`) com interface dedicada e comunicação IPC segura.
@@ -83,18 +89,3 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 - Adicionado sistema de "Headless Player" via Puppeteer para reprodução integrada.
 - Adicionados arquivos de interface (`spotify-browser.html`, `spotify-headless.html`) e preloads dedicados.
 - Expansão do `backend.py` para gerenciar endpoints do Spotify e estados de dispositivo.
-
-### 🔄 Atualização (11/06/2026)
-- Implementada funcionalidade de "Parar Tudo" (Stop All) tanto no menu da bandeja quanto via backend.
-- Adicionada atualização em tempo real do tooltip da bandeja com o uso atual de CPU e RAM.
-- Adicionado campo `health_check_url` no `config.json`.
-- Melhorada a comunicação IPC para eventos de controle em lote.
-
-### 🔄 Atualização (11/06/2026)
-- Implementado sistema de **Workspaces**: controle em lote de grupos de ferramentas.
-- Refatoração do `backend.py` com endpoints de workspaces e persistência de logs.
-- Otimização do encerramento de processos via `taskkill` assíncrono.
-
-### 🔄 Atualização (11/06/2026)
-- Adicionado menu de contexto dinâmico na bandeja.
-- Implementado sistema de temas de cores (vibes).

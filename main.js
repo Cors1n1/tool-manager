@@ -15,6 +15,7 @@ let pythonProcess = null;
 let browserProcess = null;
 let tray = null;
 let spotifyDeviceId = null;
+let isPinnedState = false;
 
 function createTray() {
     const iconPath = path.join(__dirname, 'icon.ico');
@@ -76,6 +77,10 @@ function createWindow() {
             mainWindow.hide();
         }
     });
+
+    mainWindow.on('show', () => {
+        mainWindow.setAlwaysOnTop(isPinnedState, 'screen-saver');
+    });
 }
 
 async function launchHeadlessPlayer() {
@@ -119,7 +124,7 @@ async function launchHeadlessPlayer() {
 }
 
 app.whenReady().then(() => {
-    pythonProcess = spawn('python', [path.join(__dirname, 'backend.py')], { detached: false });
+    pythonProcess = spawn('python', [path.join(__dirname, 'backend.py')], { detached: false, stdio: 'ignore' });
     
     setTimeout(() => {
         createWindow();
@@ -209,6 +214,7 @@ ipcMain.on('open-env-editor', () => {
 ipcMain.handle('window-minimize', () => mainWindow.hide());
 
 ipcMain.handle('toggle-always-on-top', (event, isPinned) => {
+    isPinnedState = isPinned;
     if (mainWindow) {
         mainWindow.setAlwaysOnTop(isPinned, 'screen-saver');
     }
@@ -235,7 +241,12 @@ ipcMain.on('register-shortcuts', (event, shortcutsMap) => {
             try {
                 globalShortcut.register(hotkey, () => {
                     if (mainWindow) {
-                        mainWindow.webContents.send('trigger-toggle', toolId);
+                        if (typeof toolId === 'object' && toolId.type === 'app') {
+                            const bounds = tray ? tray.getBounds() : undefined;
+                            toggleWindow(bounds);
+                        } else {
+                            mainWindow.webContents.send('trigger-toggle', toolId);
+                        }
                     }
                 });
             } catch (e) {
@@ -247,6 +258,12 @@ ipcMain.on('register-shortcuts', (event, shortcutsMap) => {
 
 ipcMain.handle('show-notification', (event, title, body) => {
     new Notification({ title, body, icon: path.join(__dirname, 'icon.ico') }).show();
+});
+
+ipcMain.on('update-app-hotkey', () => {
+    if (mainWindow) {
+        mainWindow.webContents.send('app-hotkey-changed');
+    }
 });
 
 ipcMain.on('update-tray-tooltip', (event, cpu, ram) => {

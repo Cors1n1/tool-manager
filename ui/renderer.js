@@ -65,6 +65,33 @@ function quitApp() {
     window.api.quit();
 }
 
+let appIsLoaded = false;
+function checkAppLoaded() {
+    if (!appIsLoaded) {
+        const cpuText = document.getElementById('dashCpu') ? document.getElementById('dashCpu').innerText : '--%';
+        const isSpotifyConnected = document.getElementById('spotifyPlayerBar') && document.getElementById('spotifyPlayerBar').style.display !== 'none';
+        const spTrackText = document.getElementById('spTrackName') ? document.getElementById('spTrackName').innerText : '';
+        
+        // Espera a CPU carregar, e se o Spotify estiver conectado, espera ele parar de dizer 'Carregando...'
+        const isCpuReady = cpuText !== '--%';
+        const isSpotifyReady = !isSpotifyConnected || (isSpotifyConnected && spTrackText !== 'Carregando...');
+        
+        if (isCpuReady && isSpotifyReady) {
+            appIsLoaded = true;
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.classList.add('hidden');
+        }
+    }
+}
+setTimeout(() => {
+    if (!appIsLoaded) {
+        appIsLoaded = true;
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.classList.add('hidden');
+    }
+}, 10000); // Fallback de segurança para nunca travar no loading
+
+
 async function togglePin() {
     isPinned = !isPinned;
     localStorage.setItem('isPinned', isPinned);
@@ -132,6 +159,7 @@ async function fetchSystemInfo() {
             document.getElementById('dashDisk').innerText = `${diskPercent}%`;
         }
     } catch(e) {}
+    checkAppLoaded();
 }
 fetchSystemInfo();
 setInterval(fetchSystemInfo, 2000);
@@ -201,6 +229,12 @@ async function loadTools() {
                 }
             });
             
+            // Add App Toggle hotkey
+            const appHk = localStorage.getItem('appHotkey');
+            if (appHk) {
+                shortcutsMap[appHk] = { type: 'app', id: 'toggle' };
+            }
+            
             if (window.api && window.api.registerShortcuts) {
                 window.api.registerShortcuts(shortcutsMap);
             }
@@ -216,6 +250,7 @@ async function loadTools() {
     } catch(e) {
         // Backend not ready or offline
     }
+    checkAppLoaded();
 }
 
 let dragStartIndex = -1;
@@ -1098,6 +1133,7 @@ async function checkSpotifyStatus() {
             document.getElementById("spotifyConnectBar").style.display = "flex";
             document.getElementById("spotifyPlayerBar").style.display = "none";
             stopSpotifyPolling();
+            checkAppLoaded(); // Se não estiver conectado, já pode liberar a tela de loading
         }
     } catch(e) {
         console.error("Spotify status error:", e);
@@ -1137,11 +1173,13 @@ async function pollSpotifyPlayer() {
         const res = await fetch(`http://127.0.0.1:5555/spotify/me/player`);
         if (res.status === 204 || res.status === 202) {
             updateSpotifyUI(null, false);
+            checkAppLoaded();
             return;
         }
         if (res.ok) {
             const data = await res.json();
             updateSpotifyUI(data.item, data.is_playing, data.device);
+            checkAppLoaded();
         }
     } catch(e) {}
     
@@ -1182,6 +1220,8 @@ function updateSpotifyUI(track, isPlaying, device) {
             const coverUrl = track.album.images[0].url;
             const spAlbumArt = document.getElementById("spAlbumArt");
             if (spAlbumArt.src !== coverUrl) {
+                spAlbumArt.style.display = 'block';
+                document.getElementById("spPlaceholder").style.display = 'none';
                 spAlbumArt.src = coverUrl;
                 document.documentElement.style.setProperty('--sp-bg-img', `url('${coverUrl}')`);
                 
@@ -1189,12 +1229,19 @@ function updateSpotifyUI(track, isPlaying, device) {
                     updateDominantColor(coverUrl);
                 }
             }
+        } else {
+            document.getElementById("spAlbumArt").style.display = 'none';
+            document.getElementById("spPlaceholder").style.display = 'block';
+            document.documentElement.style.setProperty('--sp-bg-img', 'none');
         }
     } else {
         currentSpotifyTrackId = null;
-        document.getElementById("spTrackName").innerText = "Nenhuma música tocando";
-        document.getElementById("spArtistName").innerText = "---";
-        document.getElementById("spAlbumArt").src = "";
+        document.getElementById("spTrackName").innerText = "Parado";
+        document.getElementById("spArtistName").innerText = "Spotify";
+        const spAlbumArt = document.getElementById("spAlbumArt");
+        spAlbumArt.src = "";
+        spAlbumArt.style.display = 'none';
+        document.getElementById("spPlaceholder").style.display = 'block';
         document.documentElement.style.setProperty('--sp-bg-img', 'none');
     }
 
@@ -1330,5 +1377,11 @@ function openEnvModal() {
     if (window.api && window.api.openEnvEditor) {
         window.api.openEnvEditor();
     }
+}
+
+if (window.api && window.api.onAppHotkeyChanged) {
+    window.api.onAppHotkeyChanged(() => {
+        loadTools();
+    });
 }
 

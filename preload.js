@@ -21,5 +21,7 @@ contextBridge.exposeInMainWorld('api', {
     // ENV
     readEnv: () => ipcRenderer.invoke('read-env'),
     saveEnv: (content) => ipcRenderer.invoke('save-env', content),
-    openEnvEditor: () => ipcRenderer.send('open-env-editor')
+    openEnvEditor: () => ipcRenderer.send('open-env-editor'),
+    updateAppHotkey: () => ipcRenderer.send('update-app-hotkey'),
+    onAppHotkeyChanged: (callback) => ipcRenderer.on('app-hotkey-changed', callback)
 });

@@ -8,6 +8,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
+    <div id="loadingOverlay">
+        <div class="loader-spinner"></div>
+        <div style="color: var(--text-dim); font-size: 13px; font-weight: 500; letter-spacing: 1px;">CARREGANDO...</div>
+    </div>
     <div class="widget-container">
         <!-- Header -->
         <div class="header">
@@ -69,8 +73,8 @@
         <div class="spotify-bar player" id="spotifyPlayerBar" style="display: none;">
             <div class="sp-main-row">
                 <div class="sp-cover">
-                    <img id="spAlbumArt" src="" alt="">
-                    <!-- Play overlay on hover could go here -->
+                    <i id="spPlaceholder" class="fa-brands fa-spotify" style="font-size: 24px; color: rgba(255,255,255,0.2); display: none;"></i>
+                    <img id="spAlbumArt" src="" alt="Cover">
                 </div>
                 <div class="sp-info">
                     <div class="sp-track" id="spTrackName">Carregando...</div>
