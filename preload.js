@@ -23,5 +23,7 @@ contextBridge.exposeInMainWorld('api', {
     saveEnv: (content) => ipcRenderer.invoke('save-env', content),
     openEnvEditor: () => ipcRenderer.send('open-env-editor'),
     updateAppHotkey: () => ipcRenderer.send('update-app-hotkey'),
-    onAppHotkeyChanged: (callback) => ipcRenderer.on('app-hotkey-changed', callback)
+    onAppHotkeyChanged: (callback) => ipcRenderer.on('app-hotkey-changed', callback),
+    getStartupState: () => ipcRenderer.invoke('get-startup-state'),
+    toggleStartupState: (state) => ipcRenderer.invoke('toggle-startup-state', state)
 });

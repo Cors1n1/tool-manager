@@ -299,6 +299,17 @@ function createToolItem(tool) {
     return item;
 }
 
+let activeMainTab = 'workspaces';
+
+window.switchMainTab = function(tab) {
+    activeMainTab = tab;
+    const tabWs = document.getElementById('tab-workspaces');
+    const tabLoose = document.getElementById('tab-loose');
+    if (tabWs) tabWs.classList.toggle('active', tab === 'workspaces');
+    if (tabLoose) tabLoose.classList.toggle('active', tab === 'loose');
+    renderTools();
+};
+
 function renderTools() {
     const container = document.getElementById('tool-list-container');
     container.innerHTML = '';
@@ -331,8 +342,9 @@ function renderTools() {
         }
     });
 
-    for (const [catName, catTools] of Object.entries(groups)) {
-        const wsData = workspaces[catName] || {};
+    if (activeMainTab === 'workspaces') {
+        for (const [catName, catTools] of Object.entries(groups)) {
+            const wsData = workspaces[catName] || {};
         const hotkeyText = wsData.hotkey ? `<span style="color:var(--text-dim);font-size:10px;margin-left:8px;background:rgba(255,255,255,0.05);padding:2px 5px;border-radius:4px;">[${wsData.hotkey}]</span>` : '';
         
         const isCollapsed = localStorage.getItem(`ws-collapse-${catName}`) === 'true';
@@ -376,25 +388,28 @@ function renderTools() {
         
         container.appendChild(groupEl);
     }
-
-    const looseContainer = document.createElement('div');
-    looseContainer.className = 'loose-tools-container workspace-body';
-    looseContainer.dataset.category = 'Geral';
-    
-    looseContainer.addEventListener('dragover', handleWsDragOver);
-    looseContainer.addEventListener('dragenter', handleWsDragEnter);
-    looseContainer.addEventListener('dragleave', handleWsDragLeave);
-    looseContainer.addEventListener('drop', handleWsDrop);
-
-    if (looseTools.length === 0) {
-        looseContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-dim); font-size: 12px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px; pointer-events: none;"><i class="fa-solid fa-download"></i> Área de ferramentas soltas (Arraste aqui)</div>`;
-    } else {
-        looseTools.forEach(tool => {
-            looseContainer.appendChild(createToolItem(tool));
-        });
     }
-    
-    container.appendChild(looseContainer);
+
+    if (activeMainTab === 'loose') {
+        const looseContainer = document.createElement('div');
+        looseContainer.className = 'loose-tools-container workspace-body';
+        looseContainer.dataset.category = 'Geral';
+        
+        looseContainer.addEventListener('dragover', handleWsDragOver);
+        looseContainer.addEventListener('dragenter', handleWsDragEnter);
+        looseContainer.addEventListener('dragleave', handleWsDragLeave);
+        looseContainer.addEventListener('drop', handleWsDrop);
+
+        if (looseTools.length === 0) {
+            looseContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-dim); font-size: 12px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px; pointer-events: none;"><i class="fa-solid fa-download"></i> Área de ferramentas soltas (Arraste aqui)</div>`;
+        } else {
+            looseTools.forEach(tool => {
+                looseContainer.appendChild(createToolItem(tool));
+            });
+        }
+        
+        container.appendChild(looseContainer);
+    }
 }
 
 function toggleWsCollapse(name) {
@@ -853,6 +868,24 @@ async function clearLogsTool() {
     try {
         await fetch(`${API_URL}/tools/${activeLogsToolId}/logs`, { method: 'DELETE' });
         document.getElementById('logsConsole').innerHTML = '';
+    } catch(e) {}
+}
+
+async function copyLogsTool() {
+    if (!activeLogsToolId) return;
+    try {
+        const res = await fetch(`${API_URL}/tools/${activeLogsToolId}/logs`);
+        if (res.ok) {
+            const data = await res.json();
+            const text = data.join('');
+            await navigator.clipboard.writeText(text);
+            const btn = document.querySelector('button[title="Copiar Logs"]');
+            if (btn) {
+                const oldHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado';
+                setTimeout(() => btn.innerHTML = oldHtml, 2000);
+            }
+        }
     } catch(e) {}
 }
 

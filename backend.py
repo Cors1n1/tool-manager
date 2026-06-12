@@ -354,8 +354,8 @@ cached_disks = []
 @app.route('/system-info', methods=['GET'])
 def get_system_info():
     global last_disk_check, cached_disks
-    # interval=None garante que a leitura não bloqueie a thread, retornando a média desde a última chamada
-    cpu = psutil.cpu_percent(interval=None)
+    # interval=0.1 garante uma amostra real do momento e evita leituras frequentes de 0%
+    cpu = psutil.cpu_percent(interval=0.1)
     mem = psutil.virtual_memory()
     
     current_time = time.time()
@@ -589,6 +589,11 @@ def toggle_tool(tool_id):
                 cwd = tool.get('directory') or None
                 if cwd and not os.path.exists(cwd):
                     cwd = None
+                
+                if cwd and cmd_list:
+                    exe_path = os.path.join(cwd, cmd_list[0])
+                    if os.path.isfile(exe_path) or (os.name == 'nt' and os.path.isfile(exe_path + '.exe')):
+                        cmd_list[0] = exe_path
                 
                 env = os.environ.copy()
                 env_vars_str = tool.get('env_vars', '')

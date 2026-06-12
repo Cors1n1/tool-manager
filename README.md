@@ -15,6 +15,7 @@ O Tool Manager é um gerenciador de ferramentas desktop que permite organizar, i
 * **Gerenciamento de Workspaces**: Agrupamento lógico de ferramentas com controle em lote (iniciar/parar todo o grupo).
 * **Integração Spotify**: Suporte nativo para controle de player via API e Web Playback SDK (Headless).
 * **Editor de Variáveis**: Interface dedicada para gerenciamento de variáveis de ambiente (`.env`).
+* **Autostart Nativo**: Gerenciamento de inicialização automática com o Windows via interface.
 
 ## Instalação e Configuração
 
@@ -44,9 +45,11 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 ├── .env
 ├── .gitignore
 ├── README.md
+├── ToolManager.exe
 ├── backend.py
 ├── config.json
 ├── icon.ico
+├── icon.png
 ├── main.js
 ├── package-lock.json
 ├── package.json
@@ -58,7 +61,7 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 ## Dependências
 
 * **Backend**: `flask`, `flask-cors`, `psutil`, `requests`, `python-dotenv`.
-* **Frontend**: `electron`, `chrome-paths`, `puppeteer-core` (^25.1.0).
+* **Frontend**: `electron`, `chrome-paths` (^1.0.1), `puppeteer-core` (^25.1.0).
 
 ## Como utilizar
 
@@ -67,9 +70,16 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 3. Utilize a interface para adicionar o caminho do executável, configurar variáveis de ambiente e definir categorias.
 4. O menu de contexto da bandeja (clique com botão direito no ícone) exibe o status em tempo real de suas ferramentas.
 5. Acesse o editor de variáveis via interface para configurar o arquivo `.env` sem editar arquivos manualmente.
-6. Para o Spotify, utilize a seção de autenticação nas configurações para conectar sua conta e habilitar o player integrado.
+6. Gerencie a inicialização automática do software através da aba de configurações (ícone de engrenagem).
 
 ## 📋 Histórico de Atualizações
+
+### 🔄 Atualização (12/06/2026)
+- Implementado suporte a auto-start: Adicionado `toggle-startup-state` e `get-startup-state` via IPC no `main.js` para gerenciar atalhos na pasta Inicializar do Windows.
+- Atualização do monitoramento de CPU no `backend.py`: Ajustado intervalo do `psutil` para 0.1s para leituras mais precisas.
+- Refatoração na execução de ferramentas: Adicionada lógica de resolução de caminhos (`exe_path`) para garantir que executáveis sejam encontrados corretamente a partir do diretório de trabalho.
+- Atualização de interface: Adicionado botão de copiar logs no modal e novas abas (Workspaces/Soltas) no `index.html`.
+- Atualização da configuração padrão (`config.json`): Adicionados novos exemplos de ferramentas e grupos de Workspace.
 
 ### 🔄 Atualização (12/06/2026)
 - Otimização do backend: Adicionado `logging` silencioso e refatoração da autenticação Spotify para usar `Basic Auth` em headers.
@@ -81,11 +91,4 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 - Implementado sistema de edição de variáveis de ambiente (`.env`) com interface dedicada e comunicação IPC segura.
 - Adicionados arquivos `ui/env.html` e `ui/env.js`.
 - Atualizado `main.js` com novos handlers `read-env`, `save-env` e `open-env-editor`.
-- Atualizado `preload.js` para expor métodos de gerenciamento de ambiente.
-- Atualizado token do Spotify e escopos de acesso no `spotify_token.json`.
-
-### 🔄 Atualização (11/06/2026)
-- Implementada integração total com Spotify API: autenticação via OAuth, renovação automática de tokens e endpoints de proxy para controle de player.
-- Adicionado sistema de "Headless Player" via Puppeteer para reprodução integrada.
-- Adicionados arquivos de interface (`spotify-browser.html`, `spotify-headless.html`) e preloads dedicados.
-- Expansão do `backend.py` para gerenciar endpoints do Spotify e estados de dispositivo.
+- Atualizado `preload.js` para expor métodos de gerenciamento de variável.

@@ -266,6 +266,29 @@ ipcMain.on('update-app-hotkey', () => {
     }
 });
 
+const startupLnkPath = path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup', 'Tool Manager.lnk');
+const exePath = path.join(__dirname, 'ToolManager.exe');
+
+ipcMain.handle('get-startup-state', () => {
+    return fs.existsSync(startupLnkPath);
+});
+
+ipcMain.handle('toggle-startup-state', (event, state) => {
+    const { shell } = require('electron');
+    if (state) {
+        shell.writeShortcutLink(startupLnkPath, 'create', {
+            target: exePath,
+            cwd: __dirname,
+            description: 'Inicia o Tool Manager no boot'
+        });
+    } else {
+        if (fs.existsSync(startupLnkPath)) {
+            fs.unlinkSync(startupLnkPath);
+        }
+    }
+    return true;
+});
+
 ipcMain.on('update-tray-tooltip', (event, cpu, ram) => {
     // console.log(`Received update-tray-tooltip: CPU ${cpu}%, RAM ${ram}%`);
     if (tray) {

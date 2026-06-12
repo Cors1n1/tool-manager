@@ -122,3 +122,17 @@ document.addEventListener('keydown', (e) => {
         saveAppHotkey(hotkeyStr);
     }
 });
+
+// --- Startup Logic ---
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.api && window.api.getStartupState) {
+        const isStartup = await window.api.getStartupState();
+        document.getElementById('startupCheckbox').checked = isStartup;
+    }
+});
+
+async function toggleStartup(isChecked) {
+    if (window.api && window.api.toggleStartupState) {
+        await window.api.toggleStartupState(isChecked);
+    }
+}

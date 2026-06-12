@@ -1,17 +1,43 @@
 {
     "tools": [
         {
+            "id": "de110c71-f9c6-42c4-9da4-3c09d49eda78",
+            "name": "Cerebro Frontend",
+            "command": "cmd.exe /c start_frontend.bat",
+            "directory": "C:\\Users\\Corsini\\Desktop\\cerebro 2.0\\frontend",
+            "auto_start": false,
+            "category": "Cerebro",
+            "env_vars": "",
+            "hotkey": "",
+            "auto_port": false
+        },
+        {
             "id": "f80837ea-f081-4574-a665-a96e454d3668",
             "name": "Git Auto",
             "command": "C:\\Users\\Corsini\\Desktop\\git_auto\\Git Auto.lnk",
             "directory": "C:\\Users\\Corsini\\Desktop\\git_auto",
             "auto_start": false,
-            "category": "",
+            "category": "Geral",
             "env_vars": "",
             "hotkey": "",
             "auto_port": true,
             "health_check_url": ""
+        },
+        {
+            "id": "6d170603-7b55-46e9-b8db-737a769f5749",
+            "name": "Cerebro Backend",
+            "command": "cmd.exe /c start.bat",
+            "directory": "C:\\Users\\Corsini\\Desktop\\cerebro 2.0\\backend",
+            "auto_start": false,
+            "category": "Cerebro",
+            "env_vars": "",
+            "hotkey": "",
+            "auto_port": false
         }
     ],
-    "workspaces": {}
+    "workspaces": {
+        "Cerebro": {
+            "name": "Cerebro"
+        }
+    }
 }

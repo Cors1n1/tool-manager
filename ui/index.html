@@ -57,6 +57,12 @@
             </div>
         </div>
 
+        <!-- Tabs -->
+        <div class="main-tabs">
+            <div class="main-tab active" id="tab-workspaces" onclick="switchMainTab('workspaces')"><i class="fa-solid fa-layer-group"></i> Grupos</div>
+            <div class="main-tab" id="tab-loose" onclick="switchMainTab('loose')"><i class="fa-solid fa-cubes"></i> Ferramentas Soltas</div>
+        </div>
+
         <!-- Tool List -->
         <div class="tool-list" id="tool-list-container">
             <!-- Items Injected via JS -->
@@ -174,6 +180,7 @@
             <div class="modal-header" style="display: flex; align-items: center; gap: 10px;">
                 <div style="flex: 1;">Logs: <span id="logsToolName" style="color: var(--text-primary);"></span></div>
                 <button class="icon-btn" onclick="clearLogsTool()" title="Limpar Tela" style="font-size: 13px;"><i class="fa-solid fa-broom"></i> Limpar</button>
+                <button class="icon-btn" onclick="copyLogsTool()" title="Copiar Logs" style="font-size: 13px;"><i class="fa-solid fa-copy"></i> Copiar</button>
                 <button class="icon-btn" onclick="downloadLogsTool()" title="Baixar Logs (.txt)" style="font-size: 13px;"><i class="fa-solid fa-download"></i> Baixar</button>
                 <i class="fa-solid fa-xmark close-icon" onclick="closeLogsModal()" style="margin-left: 10px;"></i>
             </div>
