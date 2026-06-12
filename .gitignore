@@ -8,6 +8,14 @@
 Thumbs.db
 desktop.ini
 
+# Arquivos Sensíveis
+*_token.json
+*token*.json
+secrets.json
+credentials.json
+*.pem
+*.key
+
 # IDEs
 .vscode/
 .idea/
