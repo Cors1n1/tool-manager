@@ -18,4 +18,8 @@ contextBridge.exposeInMainWorld('api', {
     spotifyOpenBrowser: () => ipcRenderer.send('spotify-open-browser'),
     onSpotifyAuthSuccess: (callback) => ipcRenderer.on('spotify-auth-success', callback),
     notifyDeviceReady: (deviceId) => ipcRenderer.send('spotify-device-ready', deviceId),
+    // ENV
+    readEnv: () => ipcRenderer.invoke('read-env'),
+    saveEnv: (content) => ipcRenderer.invoke('save-env', content),
+    openEnvEditor: () => ipcRenderer.send('open-env-editor')
 });

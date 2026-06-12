@@ -8,7 +8,10 @@ let isPinned = localStorage.getItem('isPinned') === 'true';
 
 // Load saved theme
 const savedTheme = localStorage.getItem('themeColor');
-if (savedTheme) {
+if (savedTheme === 'spotify-cover') {
+    document.body.classList.add('theme-spotify-cover');
+    document.documentElement.style.setProperty('--accent-rgb', '0, 229, 255');
+} else if (savedTheme) {
     document.documentElement.style.setProperty('--accent-rgb', savedTheme);
 }
 
@@ -31,8 +34,21 @@ document.addEventListener('click', (e) => {
 
 // Theme Change Function
 function setTheme(rgbString) {
-    document.documentElement.style.setProperty('--accent-rgb', rgbString);
-    localStorage.setItem('themeColor', rgbString);
+    if (rgbString === 'spotify-cover') {
+        document.body.classList.add('theme-spotify-cover');
+        document.documentElement.style.setProperty('--accent-rgb', '0, 229, 255'); // Fallback accent
+        localStorage.setItem('themeColor', 'spotify-cover');
+        
+        // Se já tiver uma música tocando, pega a cor da capa atual
+        const coverEl = document.getElementById("spAlbumArt");
+        if (coverEl && coverEl.src && coverEl.src !== window.location.href) {
+            updateDominantColor(coverEl.src);
+        }
+    } else {
+        document.body.classList.remove('theme-spotify-cover');
+        document.documentElement.style.setProperty('--accent-rgb', rgbString);
+        localStorage.setItem('themeColor', rgbString);
+    }
 }
 
 setTimeout(() => {
@@ -1142,6 +1158,8 @@ async function pollSpotifyPlayer() {
     } catch(e) {}
 }
 
+let initialVolumeSynced = false;
+
 function updateSpotifyUI(track, isPlaying, device) {
     const playBtn = document.getElementById("spPlayBtn");
     const spCover = document.querySelector(".sp-cover");
@@ -1161,18 +1179,43 @@ function updateSpotifyUI(track, isPlaying, device) {
         document.getElementById("spTrackName").innerText = track.name;
         document.getElementById("spArtistName").innerText = track.artists.map(a => a.name).join(', ');
         if (track.album && track.album.images && track.album.images.length > 0) {
-            document.getElementById("spAlbumArt").src = track.album.images[0].url;
+            const coverUrl = track.album.images[0].url;
+            const spAlbumArt = document.getElementById("spAlbumArt");
+            if (spAlbumArt.src !== coverUrl) {
+                spAlbumArt.src = coverUrl;
+                document.documentElement.style.setProperty('--sp-bg-img', `url('${coverUrl}')`);
+                
+                if (document.body.classList.contains('theme-spotify-cover')) {
+                    updateDominantColor(coverUrl);
+                }
+            }
         }
     } else {
         currentSpotifyTrackId = null;
         document.getElementById("spTrackName").innerText = "Nenhuma música tocando";
         document.getElementById("spArtistName").innerText = "---";
         document.getElementById("spAlbumArt").src = "";
+        document.documentElement.style.setProperty('--sp-bg-img', 'none');
     }
 
     if (device && device.volume_percent !== null) {
+        const savedVol = localStorage.getItem("spotifyVolume");
         const volSlider = document.getElementById("spVolume");
-        if (document.activeElement !== volSlider) {
+        
+        if (!initialVolumeSynced && savedVol !== null) {
+            initialVolumeSynced = true;
+            const targetVol = parseInt(savedVol);
+            if (device.volume_percent !== targetVol) {
+                fetch(`http://127.0.0.1:5555/spotify/me/player/volume?volume_percent=${targetVol}`, { method: 'PUT' }).catch(e=>{});
+                if (volSlider) {
+                    volSlider.value = targetVol;
+                    updateVolumeIcon(targetVol);
+                }
+                return;
+            }
+        }
+
+        if (volSlider && document.activeElement !== volSlider) {
             volSlider.value = device.volume_percent;
             updateVolumeIcon(device.volume_percent);
             localStorage.setItem("spotifyVolume", device.volume_percent);
@@ -1234,5 +1277,58 @@ if (spVolumeSlider) {
     });
 }
 
-// Inicializa quando o arquivo carregar
-setTimeout(initSpotifyPlayer, 1000);
+function updateDominantColor(imgSrc) {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        try {
+            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let r=0, g=0, b=0, count=0;
+            const step = 4 * 10;
+            for (let i = 0; i < data.length; i += step) {
+                const brightness = (data[i] + data[i+1] + data[i+2]) / 3;
+                if (brightness > 20 && brightness < 235) {
+                    r += data[i];
+                    g += data[i+1];
+                    b += data[i+2];
+                    count++;
+                }
+            }
+            if(count > 0) {
+                r = Math.floor(r/count);
+                g = Math.floor(g/count);
+                b = Math.floor(b/count);
+                
+                // Boost vibrancy a bit
+                const max = Math.max(r, g, b);
+                if (max > 0) {
+                    const factor = 255 / max * 0.8; 
+                    r = Math.min(255, Math.floor(r * factor));
+                    g = Math.min(255, Math.floor(g * factor));
+                    b = Math.min(255, Math.floor(b * factor));
+                }
+                document.documentElement.style.setProperty('--accent-rgb', `${r}, ${g}, ${b}`);
+            }
+        } catch(e) {
+            console.error("CORS error getting color", e);
+        }
+    };
+    img.src = imgSrc;
+}
+
+// Inicializa quando o arquivo carregar (sem delay para ser instantâneo)
+initSpotifyPlayer();
+
+// ENV Modal Handlers
+function openEnvModal() {
+    if (window.api && window.api.openEnvEditor) {
+        window.api.openEnvEditor();
+    }
+}
+

@@ -3,6 +3,7 @@ const path = require('path');
 const { spawn, exec } = require('child_process');
 const puppeteer = require('puppeteer-core');
 const chromePaths = require('chrome-paths');
+const fs = require('fs');
 
 // Silencia os alertas irritantes de segurança do Electron no console
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
@@ -154,6 +155,54 @@ ipcMain.handle('dialog-open-dir', async () => {
     });
     if (!result.canceled) return result.filePaths[0];
     return null;
+});
+
+// ENV handlers
+ipcMain.handle('read-env', async () => {
+    const envPath = path.join(__dirname, '.env');
+    try {
+        if (fs.existsSync(envPath)) {
+            return fs.readFileSync(envPath, 'utf8');
+        }
+    } catch(e) {
+        console.error('Error reading .env', e);
+    }
+    return '';
+});
+
+ipcMain.handle('save-env', async (event, content) => {
+    const envPath = path.join(__dirname, '.env');
+    try {
+        fs.writeFileSync(envPath, content, 'utf8');
+        return true;
+    } catch(e) {
+        console.error('Error writing .env', e);
+        return false;
+    }
+});
+
+let envEditorWindow = null;
+ipcMain.on('open-env-editor', () => {
+    if (envEditorWindow) {
+        envEditorWindow.focus();
+        return;
+    }
+    envEditorWindow = new BrowserWindow({
+        width: 600,
+        height: 500,
+        title: 'Editor de Variáveis (.env)',
+        autoHideMenuBar: true,
+        icon: path.join(__dirname, 'icon.ico'),
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            nodeIntegration: false,
+            contextIsolation: true
+        }
+    });
+    envEditorWindow.loadFile(path.join(__dirname, 'ui', 'env.html'));
+    envEditorWindow.on('closed', () => {
+        envEditorWindow = null;
+    });
 });
 
 // Explicit handlers

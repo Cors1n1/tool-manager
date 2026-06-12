@@ -12,7 +12,7 @@
         <!-- Header -->
         <div class="header">
             <div class="title">
-                <i class="fa-solid fa-bolt" style="color: var(--accent); margin-right: 5px;"></i> Tools
+                <i id="env-editor-btn" class="fa-solid fa-bolt" style="-webkit-app-region: no-drag; color: var(--accent); margin-right: 5px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.filter='brightness(1.5) drop-shadow(0 0 5px var(--accent))'" onmouseout="this.style.filter=''" title="Editar Variáveis de Ambiente (.env)" onclick="openEnvModal()"></i> Tools
                 <button onclick="openAddWsModal()" title="Novo Workspace" style="-webkit-app-region: no-drag; background: none; border: none; color: var(--text-dim); margin-left: 10px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'"><i class="fa-solid fa-folder-plus"></i></button>
                 <button onclick="openAddModal('Geral')" title="Nova Ferramenta Solta" style="-webkit-app-region: no-drag; background: none; border: none; color: var(--text-dim); margin-left: 5px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'"><i class="fa-solid fa-file-circle-plus"></i></button>
             </div>
@@ -21,7 +21,7 @@
                     <button class="icon-btn" onclick="toggleThemeMenu()" title="Escolher Tema"><i class="fa-solid fa-palette"></i></button>
                     <div id="themeMenu" style="display: none; position: absolute; top: 120%; right: 0; background: rgba(20, 20, 26, 0.98); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; width: 140px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(10px);">
                         <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; font-weight: 600; text-align: center;">Escolha a Vibe</div>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; justify-items: center;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; justify-items: center;">
                             <div class="theme-swatch" style="background: rgb(0, 229, 255);" onclick="setTheme('0, 229, 255'); toggleThemeMenu();" title="Neon Cyan"></div>
                             <div class="theme-swatch" style="background: rgb(255, 0, 255);" onclick="setTheme('255, 0, 255'); toggleThemeMenu();" title="Cyberpunk"></div>
                             <div class="theme-swatch" style="background: rgb(0, 255, 170);" onclick="setTheme('0, 255, 170'); toggleThemeMenu();" title="Matrix"></div>
@@ -30,6 +30,7 @@
                             <div class="theme-swatch" style="background: rgb(255, 215, 0);" onclick="setTheme('255, 215, 0'); toggleThemeMenu();" title="Gold"></div>
                             <div class="theme-swatch" style="background: rgb(155, 89, 182);" onclick="setTheme('155, 89, 182'); toggleThemeMenu();" title="Amethyst"></div>
                             <div class="theme-swatch" style="background: rgb(255, 255, 255);" onclick="setTheme('255, 255, 255'); toggleThemeMenu();" title="Monochrome"></div>
+                            <div class="theme-swatch" style="background: linear-gradient(135deg, #1db954, #191414);" onclick="setTheme('spotify-cover'); toggleThemeMenu();" title="Fundo Capa do Spotify"></div>
                         </div>
                     </div>
                 </div>
@@ -74,9 +75,6 @@
                 <div class="sp-info">
                     <div class="sp-track" id="spTrackName">Carregando...</div>
                     <div class="sp-artist" id="spArtistName">---</div>
-                    <div id="spDeviceLabel" style="font-size:10px; color: #1db954; margin-top: 2px; display: none;">
-                        <i class="fa-solid fa-headphones" style="margin-right:3px;"></i><span id="spDeviceLabelText">Tool Manager Player</span>
-                    </div>
                 </div>
                 <div class="sp-controls">
                     <button onclick="spotifyTogglePlay()" id="spPlayBtn" class="play-btn"><i class="fa-solid fa-play"></i></button>
