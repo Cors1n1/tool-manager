@@ -19,7 +19,11 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "electron": "^42.4.0",
+    "electron": "github:castlabs/electron-releases#v42.3.3+wvcus",
     "electron-builder": "^26.15.2"
+  },
+  "dependencies": {
+    "chrome-paths": "^1.0.1",
+    "puppeteer-core": "^25.1.0"
   }
 }

@@ -5,13 +5,282 @@ import socket
 import shlex
 import subprocess
 import threading
+import time
+import secrets
 import psutil
+import requests as http_requests
 from collections import deque
-from flask import Flask, request, jsonify
+from urllib.parse import urlencode
+from flask import Flask, request, jsonify, redirect, send_file
 from flask_cors import CORS
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+# Spotify Config
+SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID', '')
+SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET', '')
+SPOTIFY_REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI', 'http://127.0.0.1:5555/spotify/callback')
+SPOTIFY_TOKEN_FILE = 'spotify_token.json'
+SPOTIFY_SCOPES = 'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative user-library-read user-top-read'
+
+HEADLESS_DEVICE_ID = None
+
+def _read_spotify_token():
+    if os.path.exists(SPOTIFY_TOKEN_FILE):
+        with open(SPOTIFY_TOKEN_FILE, 'r') as f:
+            return json.load(f)
+    return None
+
+def _save_spotify_token(token_data):
+    token_data['saved_at'] = time.time()
+    with open(SPOTIFY_TOKEN_FILE, 'w') as f:
+        json.dump(token_data, f, indent=2)
+
+def _refresh_spotify_token():
+    token_data = _read_spotify_token()
+    if not token_data or 'refresh_token' not in token_data:
+        return None
+    resp = http_requests.post('https://accounts.spotify.com/api/token', data={
+        'grant_type': 'refresh_token',
+        'refresh_token': token_data['refresh_token'],
+        'client_id': SPOTIFY_CLIENT_ID,
+        'client_secret': SPOTIFY_CLIENT_SECRET,
+    })
+    if resp.status_code == 200:
+        new_data = resp.json()
+        new_data['refresh_token'] = token_data.get('refresh_token')
+        if 'refresh_token' in resp.json():
+            new_data['refresh_token'] = resp.json()['refresh_token']
+        _save_spotify_token(new_data)
+        return new_data
+    return None
+
+def _get_spotify_access_token():
+    token_data = _read_spotify_token()
+    if not token_data:
+        return None
+    elapsed = time.time() - token_data.get('saved_at', 0)
+    if elapsed >= token_data.get('expires_in', 3600) - 120:
+        token_data = _refresh_spotify_token()
+    if token_data:
+        return token_data.get('access_token')
+    return None
+
+def _spotify_headers():
+    token = _get_spotify_access_token()
+    if not token:
+        return None
+    return {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+
+# Spotify OAuth Endpoints
+@app.route('/spotify/login')
+def spotify_login():
+    state = secrets.token_urlsafe(16)
+    params = urlencode({
+        'client_id': SPOTIFY_CLIENT_ID,
+        'response_type': 'code',
+        'redirect_uri': SPOTIFY_REDIRECT_URI,
+        'scope': SPOTIFY_SCOPES,
+        'state': state,
+        'show_dialog': 'true'
+    })
+    return redirect(f'https://accounts.spotify.com/authorize?{params}')
+
+@app.route('/spotify/callback')
+def spotify_callback():
+    code = request.args.get('code')
+    error = request.args.get('error')
+    if error:
+        return f'<html><body style="background:#111;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh"><h2>Erro: {error}</h2></body></html>'
+    resp = http_requests.post('https://accounts.spotify.com/api/token', data={
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': SPOTIFY_REDIRECT_URI,
+        'client_id': SPOTIFY_CLIENT_ID,
+        'client_secret': SPOTIFY_CLIENT_SECRET,
+    })
+    if resp.status_code == 200:
+        _save_spotify_token(resp.json())
+        return '<html><body style="background:#111;color:#0f0;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column"><h2>✅ Spotify Conectado!</h2><p style="color:#888">Pode fechar esta janela.</p><script>setTimeout(()=>window.close(),1500)</script></body></html>'
+    return f'<html><body style="background:#111;color:#f00;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh"><h2>Erro ao autenticar: {resp.text}</h2></body></html>'
+
+@app.route('/spotify/status')
+def spotify_status():
+    token = _get_spotify_access_token()
+    return jsonify({'authenticated': token is not None})
+
+@app.route('/spotify/token')
+def spotify_token():
+    """Delivers the access token securely to the Web Playback SDK running in the renderer."""
+    token = _get_spotify_access_token()
+    if not token:
+        return jsonify({'error': 'not_authenticated'}), 401
+    return jsonify({'access_token': token})
+
+@app.route('/spotify/logout', methods=['POST'])
+def spotify_logout():
+    if os.path.exists(SPOTIFY_TOKEN_FILE):
+        os.remove(SPOTIFY_TOKEN_FILE)
+    return jsonify({'status': 'ok'})
+
+@app.route('/spotify/headless_player')
+def spotify_headless_player():
+    """Serves the headless player HTML file."""
+    return send_file(os.path.join(os.path.dirname(__file__), 'ui', 'spotify-headless.html'))
+
+@app.route('/spotify/headless_device', methods=['POST'])
+def spotify_headless_device():
+    global HEADLESS_DEVICE_ID
+    data = request.json or {}
+    device_id = data.get('device_id')
+    if device_id:
+        HEADLESS_DEVICE_ID = device_id
+        return jsonify({'status': 'ok'})
+    return jsonify({'error': 'no_device'}), 400
+
+@app.route('/spotify/headless_device', methods=['GET'])
+def get_spotify_headless_device():
+    return jsonify({'device_id': HEADLESS_DEVICE_ID})
+
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
+
+# Spotify Player Proxy Endpoints
+@app.route('/spotify/me/player')
+def spotify_player_state():
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    resp = http_requests.get('https://api.spotify.com/v1/me/player', headers=headers)
+    if resp.status_code == 204 or resp.status_code == 202:
+        return jsonify({'is_playing': False, 'item': None})
+    if resp.status_code == 200:
+        return jsonify(resp.json())
+    return jsonify({'error': resp.text}), resp.status_code
+
+@app.route('/spotify/me/player', methods=['PUT'])
+def spotify_transfer_device():
+    """Transfer playback to a different device (e.g., the internal SDK player)."""
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    body = request.get_json(silent=True) or {}
+    resp = http_requests.put('https://api.spotify.com/v1/me/player', headers=headers, json=body)
+    return jsonify({'status': 'ok'}), resp.status_code
+
+@app.route('/spotify/me/player/play', methods=['PUT'])
+def spotify_play():
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    body = request.get_json(silent=True) or {}
+    # device_id can be passed as a query param to target a specific player device
+    device_id = request.args.get('device_id', '')
+    url = 'https://api.spotify.com/v1/me/player/play'
+    if device_id:
+        url += f'?device_id={device_id}'
+    resp = http_requests.put(url, headers=headers, json=body if body else None)
+    return jsonify({'status': 'ok'}), resp.status_code
+
+@app.route('/spotify/me/player/pause', methods=['PUT'])
+def spotify_pause():
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    resp = http_requests.put('https://api.spotify.com/v1/me/player/pause', headers=headers)
+    return jsonify({'status': 'ok'}), resp.status_code
+
+@app.route('/spotify/me/player/next', methods=['POST'])
+def spotify_next():
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    resp = http_requests.post('https://api.spotify.com/v1/me/player/next', headers=headers)
+    return jsonify({'status': 'ok'}), resp.status_code
+
+@app.route('/spotify/me/player/previous', methods=['POST'])
+def spotify_previous():
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    resp = http_requests.post('https://api.spotify.com/v1/me/player/previous', headers=headers)
+    return jsonify({'status': 'ok'}), resp.status_code
+
+@app.route('/spotify/me/player/volume', methods=['PUT'])
+def spotify_volume():
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    vol = request.args.get('volume_percent', 50)
+    resp = http_requests.put(f'https://api.spotify.com/v1/me/player/volume?volume_percent={vol}', headers=headers)
+    return jsonify({'status': 'ok'}), resp.status_code
+
+# Spotify Library Endpoints
+@app.route('/spotify/me/playlists')
+def spotify_playlists():
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    limit = request.args.get('limit', 50)
+    offset = request.args.get('offset', 0)
+    resp = http_requests.get(f'https://api.spotify.com/v1/me/playlists?limit={limit}&offset={offset}', headers=headers)
+    if resp.status_code == 200:
+        return jsonify(resp.json())
+    return jsonify({'error': resp.text}), resp.status_code
+
+@app.route('/spotify/playlists/<playlist_id>/tracks')
+def spotify_playlist_tracks(playlist_id):
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    limit = request.args.get('limit', 100)
+    offset = request.args.get('offset', 0)
+    resp = http_requests.get(f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks?limit={limit}&offset={offset}', headers=headers)
+    if resp.status_code == 200:
+        return jsonify(resp.json())
+    return jsonify({'error': resp.text}), resp.status_code
+
+@app.route('/spotify/me/tracks')
+def spotify_saved_tracks():
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    limit = request.args.get('limit', 50)
+    offset = request.args.get('offset', 0)
+    resp = http_requests.get(f'https://api.spotify.com/v1/me/tracks?limit={limit}&offset={offset}', headers=headers)
+    if resp.status_code == 200:
+        return jsonify(resp.json())
+    return jsonify({'error': resp.text}), resp.status_code
+
+@app.route('/spotify/me/top/tracks')
+def spotify_top_tracks():
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    limit = request.args.get('limit', 50)
+    time_range = request.args.get('time_range', 'short_term')
+    resp = http_requests.get(f'https://api.spotify.com/v1/me/top/tracks?limit={limit}&time_range={time_range}', headers=headers)
+    if resp.status_code == 200:
+        return jsonify(resp.json())
+    return jsonify({'error': resp.text}), resp.status_code
+
+@app.route('/spotify/search')
+def spotify_search():
+    headers = _spotify_headers()
+    if not headers:
+        return jsonify({'error': 'not_authenticated'}), 401
+    q = request.args.get('q', '')
+    search_type = request.args.get('type', 'track')
+    limit = request.args.get('limit', 20)
+    resp = http_requests.get(f'https://api.spotify.com/v1/search?q={q}&type={search_type}&limit={limit}', headers=headers)
+    if resp.status_code == 200:
+        return jsonify(resp.json())
+    return jsonify({'error': resp.text}), resp.status_code
 
 CONFIG_FILE = "config.json"
 processes = {}

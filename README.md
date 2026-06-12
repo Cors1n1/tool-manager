@@ -13,13 +13,14 @@ O Tool Manager é um gerenciador de ferramentas desktop que permite organizar, i
 * **Monitoramento de Recursos**: Painel de visualização de uso de CPU, memória e discos.
 * **Personalização Visual**: Suporte a múltiplos temas de cores (vibes) via menu de interface.
 * **Gerenciamento de Workspaces**: Agrupamento lógico de ferramentas com controle em lote (iniciar/parar todo o grupo).
+* **Integração Spotify**: Suporte nativo para controle de player via API e Web Playback SDK (Headless).
 
 ## Instalação e Configuração
 
 A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 
-1. O sistema gerencia o arquivo de configuração `config.json` de forma autônoma. Caso o arquivo não exista, o backend o criará automaticamente na primeira execução.
-2. Certifique-se de possuir o **Python** (com bibliotecas `flask`, `flask-cors`, `psutil`) e o **Node.js** instalados.
+1. O sistema gerencia os arquivos de configuração `config.json` e `spotify_token.json` de forma autônoma. Caso não existam, o backend os criará automaticamente na primeira execução.
+2. Certifique-se de possuir o **Python** (com bibliotecas `flask`, `flask-cors`, `psutil`, `requests`, `python-dotenv`) e o **Node.js** instalados.
 3. Para iniciar a aplicação, basta executar:
    ```bash
    npm install
@@ -33,7 +34,11 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 ├── ui
 │   ├── index.html
 │   ├── renderer.js
+│   ├── spotify-browser.html
+│   ├── spotify-browser.js
+│   ├── spotify-headless.html
 │   └── style.css
+├── .env
 ├── .gitignore
 ├── README.md
 ├── backend.py
@@ -42,46 +47,44 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 ├── main.js
 ├── package-lock.json
 ├── package.json
-└── preload.js
+├── preload.js
+├── spotify-browser-preload.js
+└── spotify_token.json
 ```
 
 ## Dependências
 
-* **Backend**: `flask`, `flask-cors`, `psutil`.
-* **Frontend**: `electron`.
+* **Backend**: `flask`, `flask-cors`, `psutil`, `requests`, `python-dotenv`.
+* **Frontend**: `electron`, `chrome-paths`, `puppeteer-core`.
 
 ## Como utilizar
 
 1. O ícone aparecerá na bandeja do sistema após a execução.
 2. Clique no ícone para alternar a visibilidade da janela.
 3. Utilize a interface para adicionar o caminho do executável, configurar variáveis de ambiente e definir categorias.
-4. O menu de contexto da bandeja (clique com botão direito no ícone) agora exibe o status em tempo real de suas ferramentas (🟢 rodando / ⭕ parado).
-5. Personalize a aparência da interface utilizando o botão de paleta de cores no topo da janela.
-6. Gerencie seus projetos através da aba de Workspaces, permitindo ligar/desligar conjuntos inteiros de ferramentas com um clique.
+4. O menu de contexto da bandeja (clique com botão direito no ícone) exibe o status em tempo real de suas ferramentas.
+5. Para o Spotify, utilize a seção de autenticação nas configurações para conectar sua conta e habilitar o player integrado.
 
 ## 📋 Histórico de Atualizações
 
 ### 🔄 Atualização (11/06/2026)
+- Implementada integração total com Spotify API: autenticação via OAuth, renovação automática de tokens e endpoints de proxy para controle de player.
+- Adicionado sistema de "Headless Player" via Puppeteer para reprodução integrada.
+- Adicionados arquivos de interface (`spotify-browser.html`, `spotify-headless.html`) e preloads dedicados.
+- Expansão do `backend.py` para gerenciar endpoints do Spotify e estados de dispositivo.
+
+### 🔄 Atualização (11/06/2026)
 - Implementada funcionalidade de "Parar Tudo" (Stop All) tanto no menu da bandeja quanto via backend.
 - Adicionada atualização em tempo real do tooltip da bandeja com o uso atual de CPU e RAM.
-- Adicionado campo `health_check_url` no `config.json` para futuras validações de serviços.
-- Melhorada a comunicação IPC para eventos de controle em lote, otimizando a responsividade da UI.
+- Adicionado campo `health_check_url` no `config.json`.
+- Melhorada a comunicação IPC para eventos de controle em lote.
 
 ### 🔄 Atualização (11/06/2026)
-- Implementado sistema completo de **Workspaces**: agora é possível criar grupos, renomear, deletar e controlar ferramentas em lote (iniciar/parar todas do grupo).
-- Refatoração do `backend.py` para incluir endpoints de gerenciamento de workspaces e melhorias no tratamento de logs (limpeza e persistência).
-- Aprimorado o mecanismo de encerramento de processos (`stop_tool`) utilizando `taskkill` com tratamento assíncrono para evitar bloqueios na UI.
-- Ajuste na busca de portas livres (`find_free_port`) para evitar conflitos de atribuição em execuções rápidas.
-- Adicionada integração de logs entre console do Electron e interface.
+- Implementado sistema de **Workspaces**: controle em lote de grupos de ferramentas.
+- Refatoração do `backend.py` com endpoints de workspaces e persistência de logs.
+- Otimização do encerramento de processos via `taskkill` assíncrono.
 
 ### 🔄 Atualização (11/06/2026)
-- Adicionado menu de contexto dinâmico na bandeja do sistema (Tray) que reflete o estado atual das ferramentas.
-- Implementado sistema de seleção de temas (vibes) com persistência via `localStorage`.
-- Otimização do processo de renderização e comunicação IPC para atualização do menu da bandeja.
-
-### 🔄 Atualização (01/06/2026)
-- Implementado sistema de monitoramento de recursos do sistema (CPU/RAM/Disk).
-- Adicionada funcionalidade de alocação dinâmica de portas para processos.
-- Adicionado sistema de captura de logs em tempo real por ferramenta.
-- Implementado suporte a variáveis de ambiente (env_vars) e reordenação de ferramentas.
-- Melhorias na edição e gerenciamento de metadados das ferramentas.
+- Adicionado menu de contexto dinâmico na bandeja.
+- Implementado sistema de seleção de temas (vibes).
+- Otimização do processo de renderização e comunicação IPC.

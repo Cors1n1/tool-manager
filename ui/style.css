@@ -858,3 +858,187 @@ body {
     outline: 2px dashed var(--primary);
     outline-offset: -2px;
 }
+
+/* --- Spotify Player Premium UI --- */
+.spotify-bar {
+    display: flex;
+    flex-direction: column;
+    background: rgba(18, 18, 24, 0.85);
+    backdrop-filter: blur(12px);
+    padding: 12px 15px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    margin-top: auto;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.spotify-bar.connect {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    border-radius: 0;
+    background: rgba(0,0,0,0.6);
+}
+
+.sp-main-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.sp-bottom-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sp-cover {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #111;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+    position: relative;
+    border: 2px solid #282828;
+    animation: spin-record 5s linear infinite;
+    animation-play-state: paused;
+}
+.sp-cover.playing {
+    animation-play-state: running;
+}
+.sp-cover::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    background: rgba(18, 18, 24, 0.95);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: inset 0 0 2px rgba(0,0,0,0.8), 0 0 0 1px #1db954;
+    z-index: 2;
+}
+@keyframes spin-record {
+    100% { transform: rotate(360deg); }
+}
+.sp-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sp-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+.sp-track {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.2px;
+}
+.sp-artist {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
+
+.sp-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.sp-controls button {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+.sp-controls button:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+}
+.sp-controls .play-btn {
+    background: #1db954;
+    color: #000;
+    box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3);
+}
+.sp-controls .play-btn:hover {
+    background: #1ed760;
+    color: #000;
+    transform: scale(1.08);
+    box-shadow: 0 6px 16px rgba(29, 185, 84, 0.5);
+}
+.sp-controls .browser-btn {
+    color: #1db954;
+    background: rgba(29, 185, 84, 0.1);
+}
+.sp-controls .browser-btn:hover {
+    background: rgba(29, 185, 84, 0.2);
+    color: #1ed760;
+}
+
+.sp-volume-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+.sp-vol-icon {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    width: 16px;
+    text-align: center;
+}
+.sp-volume {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    outline: none;
+    transition: 0.2s;
+}
+.sp-volume:hover {
+    background: rgba(255,255,255,0.2);
+}
+.sp-volume::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    transition: 0.2s;
+}
+.sp-volume::-webkit-slider-thumb:hover {
+    background: #1db954;
+    transform: scale(1.2);
+}

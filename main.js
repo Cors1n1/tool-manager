@@ -1,10 +1,19 @@
 const { app, BrowserWindow, ipcMain, Tray, nativeImage, screen, dialog, globalShortcut, Notification, Menu } = require('electron');
 const path = require('path');
 const { spawn, exec } = require('child_process');
+const puppeteer = require('puppeteer-core');
+const chromePaths = require('chrome-paths');
 
-let mainWindow;
+// Silencia os alertas irritantes de segurança do Electron no console
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
+
+console.log('App starting. Electron version:', process.versions.electron);
+
+let mainWindow = null;
 let pythonProcess = null;
+let browserProcess = null;
 let tray = null;
+let spotifyDeviceId = null;
 
 function createTray() {
     const iconPath = path.join(__dirname, 'icon.ico');
@@ -68,16 +77,57 @@ function createWindow() {
     });
 }
 
+async function launchHeadlessPlayer() {
+    try {
+        const executablePath = chromePaths.chrome || chromePaths.edge;
+        if (!executablePath) {
+            console.error('No Chrome or Edge found for headless player.');
+            return;
+        }
+        
+        console.log('Launching headless player with', executablePath);
+        browserProcess = await puppeteer.launch({
+            executablePath: executablePath,
+            headless: 'new', // Use new headless to hide taskbar icon but keep full browser capabilities (DRM)
+            ignoreDefaultArgs: ['--mute-audio'], // CRITICAL: Puppeteer mutes audio by default!
+            args: [
+                '--disable-gpu',
+                '--disable-software-rasterizer',
+                '--autoplay-policy=no-user-gesture-required'
+            ],
+            defaultViewport: null
+        });
+
+        const page = await browserProcess.newPage();
+        page.on('console', msg => console.log('Headless Chrome:', msg.text()));
+        
+        // Wait for backend to be up
+        setTimeout(async () => {
+            try {
+                await page.goto('http://localhost:5555/spotify/headless_player');
+                // Simulate a click to unlock AudioContext just in case
+                await page.click('body');
+            } catch(err) {
+                console.error(err);
+            }
+        }, 3000);
+        
+    } catch (e) {
+        console.error('Failed to launch headless player:', e);
+    }
+}
+
 app.whenReady().then(() => {
     pythonProcess = spawn('python', [path.join(__dirname, 'backend.py')], { detached: false });
     
     setTimeout(() => {
         createWindow();
         createTray();
-        // Show once on startup so user knows it's there
         mainWindow.show();
-        mainWindow.center(); // Center initially
+        mainWindow.center();
     }, 1000);
+    
+    launchHeadlessPlayer();
 });
 
 // Do not quit when window is closed (hidden)
@@ -123,6 +173,9 @@ ipcMain.handle('app-quit', () => {
 app.on('will-quit', () => {
     if (pythonProcess) {
         try { exec(`taskkill /pid ${pythonProcess.pid} /T /F`); } catch(e) {}
+    }
+    if (browserProcess) {
+        try { browserProcess.close(); } catch(e) {}
     }
 });
 
@@ -195,6 +248,53 @@ ipcMain.on('update-tray-menu', (event, tools) => {
     
     const contextMenu = Menu.buildFromTemplate(template);
     tray.setContextMenu(contextMenu);
+});
+
+// --- Spotify ---
+ipcMain.on('spotify-open-auth', () => {
+    let authWin = new BrowserWindow({
+        width: 600,
+        height: 800,
+        autoHideMenuBar: true,
+        webPreferences: { nodeIntegration: false, contextIsolation: true }
+    });
+    authWin.loadURL('http://localhost:5555/spotify/login');
+    authWin.webContents.on('did-navigate', (event, url) => {
+        if (url.includes('spotify/callback') && url.includes('code=')) {
+            setTimeout(() => {
+                if (!authWin.isDestroyed()) authWin.close();
+                if (mainWindow) mainWindow.webContents.send('spotify-auth-success');
+            }, 1500);
+        }
+    });
+});
+
+ipcMain.on('spotify-open-browser', () => {
+    let spWin = new BrowserWindow({
+        width: 1100,
+        height: 720,
+        title: "Spotify Browser — Tool Manager",
+        autoHideMenuBar: true,
+        webPreferences: { 
+            preload: path.join(__dirname, 'spotify-browser-preload.js'),
+            nodeIntegration: false, 
+            contextIsolation: true 
+        }
+    });
+    spWin.setMenu(null);
+    spWin.loadFile(path.join(__dirname, 'ui', 'spotify-browser.html'));
+    // Pass the current device_id once the page is ready
+    spWin.webContents.on('did-finish-load', () => {
+        if (spotifyDeviceId) {
+            spWin.webContents.send('set-device-id', spotifyDeviceId);
+        }
+    });
+});
+
+// Receive device_id from the Web Playback SDK in the renderer
+ipcMain.on('spotify-device-ready', (event, deviceId) => {
+    spotifyDeviceId = deviceId;
+    console.log('[Spotify] Internal player device registered:', deviceId);
 });
 
 app.on('will-quit', () => {

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spotify Headless Player</title>
+</head>
+<body>
+    <h1>Headless Spotify Player Running</h1>
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <script>
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            const savedVol = localStorage.getItem("spotifyVolume");
+            const initialVolume = savedVol !== null ? parseInt(savedVol) / 100.0 : 0.5;
+
+            const player = new Spotify.Player({
+                name: 'Tool Manager Player',
+                getOAuthToken: cb => {
+                    const fetchToken = () => {
+                        fetch('/spotify/token')
+                            .then(res => {
+                                if (res.status === 401) throw new Error("Unauthorized");
+                                return res.json();
+                            })
+                            .then(data => {
+                                if (data && data.access_token) {
+                                    cb(data.access_token);
+                                } else {
+                                    console.log("Headless Player waiting for login...");
+                                    setTimeout(fetchToken, 3000);
+                                }
+                            })
+                            .catch(err => {
+                                console.log("Headless Player waiting for login...");
+                                setTimeout(fetchToken, 3000);
+                            });
+                    };
+                    fetchToken();
+                },
+                volume: initialVolume
+            });
+
+            player.addListener('ready', ({ device_id }) => {
+                console.log('Headless Player ready with Device ID', device_id);
+                // Send the device_id back to the backend
+                fetch('/spotify/headless_device', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ device_id: device_id })
+                }).then(() => {
+                    console.log('Device ID sent to backend');
+                    // Transfer playback automatically
+                    fetch('/spotify/me/player', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ device_ids: [device_id], play: false })
+                    }).then(() => console.log('Playback transferred to Headless'));
+                });
+            });
+
+            player.addListener('not_ready', ({ device_id }) => {
+                console.log('Device ID has gone offline', device_id);
+            });
+
+            player.addListener('initialization_error', ({ message }) => { console.error('init error', message); });
+            player.addListener('authentication_error', ({ message }) => { console.error('auth error', message); });
+            player.addListener('account_error', ({ message }) => { console.error('account error', message); });
+            player.addListener('playback_error', ({ message }) => { console.error('playback error', message); });
+
+            player.connect();
+        };
+    </script>
+</body>
+</html>

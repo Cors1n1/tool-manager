@@ -56,6 +56,41 @@
         <div class="tool-list" id="tool-list-container">
             <!-- Items Injected via JS -->
         </div>
+
+        <!-- Spotify Connect Bar -->
+        <div class="spotify-bar connect" id="spotifyConnectBar" style="display: none;">
+            <i class="fa-brands fa-spotify" style="font-size: 18px; color: #1db954;"></i>
+            <span style="flex: 1; font-size: 13px; color: var(--text-dim);">Spotify não conectado</span>
+            <button class="btn primary" onclick="spotifyLogin()" style="padding: 4px 10px; font-size: 12px; background: #1db954; color: #000; border: none; font-weight: bold;"><i class="fa-solid fa-link"></i> Conectar</button>
+        </div>
+
+        <!-- Spotify Player Bar -->
+        <div class="spotify-bar player" id="spotifyPlayerBar" style="display: none;">
+            <div class="sp-main-row">
+                <div class="sp-cover">
+                    <img id="spAlbumArt" src="" alt="">
+                    <!-- Play overlay on hover could go here -->
+                </div>
+                <div class="sp-info">
+                    <div class="sp-track" id="spTrackName">Carregando...</div>
+                    <div class="sp-artist" id="spArtistName">---</div>
+                    <div id="spDeviceLabel" style="font-size:10px; color: #1db954; margin-top: 2px; display: none;">
+                        <i class="fa-solid fa-headphones" style="margin-right:3px;"></i><span id="spDeviceLabelText">Tool Manager Player</span>
+                    </div>
+                </div>
+                <div class="sp-controls">
+                    <button onclick="spotifyTogglePlay()" id="spPlayBtn" class="play-btn"><i class="fa-solid fa-play"></i></button>
+                    <button onclick="spotifyNext()" class="next-btn" title="Próxima"><i class="fa-solid fa-forward-step"></i></button>
+                    <button onclick="spotifyOpenBrowser()" class="browser-btn" title="Navegador Spotify"><i class="fa-solid fa-music"></i></button>
+                </div>
+            </div>
+            <div class="sp-bottom-row">
+                <div class="sp-volume-wrapper">
+                    <i class="fa-solid fa-volume-low sp-vol-icon" id="spVolIcon"></i>
+                    <input type="range" class="sp-volume" id="spVolume" min="0" max="100" value="50" title="Volume">
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Add Modal -->

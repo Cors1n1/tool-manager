@@ -12,5 +12,10 @@ contextBridge.exposeInMainWorld('api', {
     onTriggerStopAll: (callback) => ipcRenderer.on('trigger-stop-all', callback),
     getPathForFile: (file) => webUtils.getPathForFile(file),
     updateTrayMenu: (tools) => ipcRenderer.send('update-tray-menu', tools),
-    updateTrayTooltip: (cpu, ram) => ipcRenderer.send('update-tray-tooltip', cpu, ram)
+    updateTrayTooltip: (cpu, ram) => ipcRenderer.send('update-tray-tooltip', cpu, ram),
+    // Spotify
+    spotifyOpenAuth: () => ipcRenderer.send('spotify-open-auth'),
+    spotifyOpenBrowser: () => ipcRenderer.send('spotify-open-browser'),
+    onSpotifyAuthSuccess: (callback) => ipcRenderer.on('spotify-auth-success', callback),
+    notifyDeviceReady: (deviceId) => ipcRenderer.send('spotify-device-ready', deviceId),
 });

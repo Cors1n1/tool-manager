@@ -1052,3 +1052,187 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ===========================
+// Spotify Mini Player Logic (Autonomous Mode)
+// ===========================
+
+let spotifyPollInterval = null;
+let currentSpotifyTrackId = null;
+
+// --- Auth & Connection Flow ---
+function initSpotifyPlayer() {
+    checkSpotifyStatus();
+    if (window.api && window.api.onSpotifyAuthSuccess) {
+        window.api.onSpotifyAuthSuccess(() => {
+            checkSpotifyStatus();
+        });
+    }
+}
+
+async function checkSpotifyStatus() {
+    try {
+        const res = await fetch(`http://127.0.0.1:5555/spotify/status`);
+        const data = await res.json();
+        if (data.authenticated) {
+            document.getElementById("spotifyConnectBar").style.display = "none";
+            document.getElementById("spotifyPlayerBar").style.display = "flex";
+            startSpotifyPolling();
+        } else {
+            document.getElementById("spotifyConnectBar").style.display = "flex";
+            document.getElementById("spotifyPlayerBar").style.display = "none";
+            stopSpotifyPolling();
+        }
+    } catch(e) {
+        console.error("Spotify status error:", e);
+    }
+}
+
+function spotifyLogin() {
+    if (window.api && window.api.spotifyOpenAuth) {
+        window.api.spotifyOpenAuth();
+    } else {
+        window.open('http://127.0.0.1:5555/spotify/login', '_blank');
+    }
+}
+
+function spotifyOpenBrowser() {
+    if (window.api && window.api.spotifyOpenBrowser) {
+        window.api.spotifyOpenBrowser();
+    }
+}
+
+// --- Polling ---
+function startSpotifyPolling() {
+    if (spotifyPollInterval) return;
+    pollSpotifyPlayer();
+    spotifyPollInterval = setInterval(pollSpotifyPlayer, 3000);
+}
+
+function stopSpotifyPolling() {
+    if (spotifyPollInterval) {
+        clearInterval(spotifyPollInterval);
+        spotifyPollInterval = null;
+    }
+}
+
+async function pollSpotifyPlayer() {
+    try {
+        const res = await fetch(`http://127.0.0.1:5555/spotify/me/player`);
+        if (res.status === 204 || res.status === 202) {
+            updateSpotifyUI(null, false);
+            return;
+        }
+        if (res.ok) {
+            const data = await res.json();
+            updateSpotifyUI(data.item, data.is_playing, data.device);
+        }
+    } catch(e) {}
+    
+    // Also update headless indicator if device active
+    try {
+        const hl = await fetch(`http://127.0.0.1:5555/spotify/headless_device`);
+        const hlData = await hl.json();
+        const label = document.getElementById("spDeviceLabel");
+        if (hlData.device_id && label) {
+            label.style.display = "block";
+        } else if (label) {
+            label.style.display = "none";
+        }
+    } catch(e) {}
+}
+
+function updateSpotifyUI(track, isPlaying, device) {
+    const playBtn = document.getElementById("spPlayBtn");
+    const spCover = document.querySelector(".sp-cover");
+    
+    if (playBtn) {
+        if (isPlaying) {
+            playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            if(spCover) spCover.classList.add('playing');
+        } else {
+            playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            if(spCover) spCover.classList.remove('playing');
+        }
+    }
+
+    if (track) {
+        currentSpotifyTrackId = track.id;
+        document.getElementById("spTrackName").innerText = track.name;
+        document.getElementById("spArtistName").innerText = track.artists.map(a => a.name).join(', ');
+        if (track.album && track.album.images && track.album.images.length > 0) {
+            document.getElementById("spAlbumArt").src = track.album.images[0].url;
+        }
+    } else {
+        currentSpotifyTrackId = null;
+        document.getElementById("spTrackName").innerText = "Nenhuma música tocando";
+        document.getElementById("spArtistName").innerText = "---";
+        document.getElementById("spAlbumArt").src = "";
+    }
+
+    if (device && device.volume_percent !== null) {
+        const volSlider = document.getElementById("spVolume");
+        if (document.activeElement !== volSlider) {
+            volSlider.value = device.volume_percent;
+            updateVolumeIcon(device.volume_percent);
+            localStorage.setItem("spotifyVolume", device.volume_percent);
+        }
+    }
+}
+
+function updateVolumeIcon(vol) {
+    const icon = document.getElementById("spVolIcon");
+    icon.className = "sp-vol-icon fa-solid";
+    if (vol == 0) icon.classList.add("fa-volume-xmark");
+    else if (vol < 50) icon.classList.add("fa-volume-low");
+    else icon.classList.add("fa-volume-high");
+}
+
+// --- Controls ---
+async function spotifyTogglePlay() {
+    const playBtn = document.getElementById("spPlayBtn");
+    const isPlaying = playBtn && playBtn.innerHTML.includes("fa-pause");
+    const endpoint = isPlaying ? "pause" : "play";
+    try {
+        await fetch(`http://127.0.0.1:5555/spotify/me/player/${endpoint}`, { method: 'PUT' });
+        setTimeout(pollSpotifyPlayer, 500);
+    } catch(e) {}
+}
+
+async function spotifyNext() {
+    try {
+        await fetch(`http://127.0.0.1:5555/spotify/me/player/next`, { method: 'POST' });
+        setTimeout(pollSpotifyPlayer, 500);
+    } catch(e) {}
+}
+
+async function spotifyPrev() {
+    try {
+        await fetch(`http://127.0.0.1:5555/spotify/me/player/previous`, { method: 'POST' });
+        setTimeout(pollSpotifyPlayer, 500);
+    } catch(e) {}
+}
+
+const spVolumeSlider = document.getElementById("spVolume");
+if (spVolumeSlider) {
+    const savedVol = localStorage.getItem("spotifyVolume");
+    if (savedVol !== null) {
+        spVolumeSlider.value = savedVol;
+        updateVolumeIcon(parseInt(savedVol));
+    }
+
+    spVolumeSlider.addEventListener("input", async (e) => {
+        const vol = parseInt(e.target.value);
+        updateVolumeIcon(vol);
+        localStorage.setItem("spotifyVolume", vol);
+    });
+    spVolumeSlider.addEventListener("change", async (e) => {
+        const vol = e.target.value;
+        try {
+            await fetch(`http://127.0.0.1:5555/spotify/me/player/volume?volume_percent=${vol}`, { method: 'PUT' });
+        } catch(err) {}
+    });
+}
+
+// Inicializa quando o arquivo carregar
+setTimeout(initSpotifyPlayer, 1000);
