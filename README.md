@@ -74,6 +74,12 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 
 ## 📋 Histórico de Atualizações
 
+### 🔄 Atualização (21/09/2026)
+- Melhoria no sistema de execução de processos no Windows: Implementada injeção automática de `cmd.exe /c` para arquivos `.bat` e `.cmd`.
+- Ajuste de robustez para caminhos no Windows: Adicionado tratamento de escape para barras invertidas (`\\`) evitando falhas no `shlex`.
+- Atualização do `.gitignore`: Adicionada regra para ignorar arquivos de atalho (`.lnk`).
+- Atualização do `config.json`: Inclusão de novas ferramentas de automação (Cerebro, Sound Pad, Emprego, DuckDNS, Wifi).
+
 ### 🔄 Atualização (12/06/2026)
 - Implementado suporte a auto-start: Adicionado `toggle-startup-state` e `get-startup-state` via IPC no `main.js` para gerenciar atalhos na pasta Inicializar do Windows.
 - Atualização do monitoramento de CPU no `backend.py`: Ajustado intervalo do `psutil` para 0.1s para leituras mais precisas.
@@ -82,13 +88,5 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 - Atualização da configuração padrão (`config.json`): Adicionados novos exemplos de ferramentas e grupos de Workspace.
 
 ### 🔄 Atualização (12/06/2026)
-- Otimização do backend: Adicionado `logging` silencioso e refatoração da autenticação Spotify para usar `Basic Auth` em headers.
-- Melhoria no sistema de monitoramento: `psutil` configurado para não bloquear a thread principal; cache de disco implementado com expiração de 60s.
-- Atualização do `main.js`: Implementado estado de persistência para "Always on Top" e suporte a alternância da janela via hotkey global.
-- Refatoração do `main.js` para garantir que o processo Python seja iniciado silenciosamente (`stdio: 'ignore'`).
-
-### 🔄 Atualização (11/06/2026)
-- Implementado sistema de edição de variáveis de ambiente (`.env`) com interface dedicada e comunicação IPC segura.
-- Adicionados arquivos `ui/env.html` e `ui/env.js`.
-- Atualizado `main.js` com novos handlers `read-env`, `save-env` e `open-env-editor`.
-- Atualizado `preload.js` para expor métodos de gerenciamento de variável.
+- Oti
+... [readme truncado]

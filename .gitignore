@@ -110,3 +110,7 @@ build/
 dist/
 *.log
 tmp/
+
+
+# --- Regras Automáticas Adicionais (Git Auto) ---
+*.lnk

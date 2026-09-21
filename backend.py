@@ -584,6 +584,9 @@ def toggle_tool(tool_id):
                     except Exception as e:
                         print("Error resolving LNK:", e)
                 
+                # Escapa barras invertidas no Windows para o shlex não removê-las
+                if os.name == 'nt':
+                    cmd_str = cmd_str.replace('\\', '\\\\')
                 cmd_list = shlex.split(cmd_str)
                     
                 cwd = tool.get('directory') or None
@@ -594,6 +597,10 @@ def toggle_tool(tool_id):
                     exe_path = os.path.join(cwd, cmd_list[0])
                     if os.path.isfile(exe_path) or (os.name == 'nt' and os.path.isfile(exe_path + '.exe')):
                         cmd_list[0] = exe_path
+                
+                # Injeta cmd.exe /c para rodar .bat e .cmd perfeitamente no Windows
+                if os.name == 'nt' and cmd_list and cmd_list[0].lower().endswith(('.bat', '.cmd')):
+                    cmd_list = ['cmd.exe', '/c'] + cmd_list
                 
                 env = os.environ.copy()
                 env_vars_str = tool.get('env_vars', '')
