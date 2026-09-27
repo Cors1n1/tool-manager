@@ -16,13 +16,14 @@ O Tool Manager é um gerenciador de ferramentas desktop que permite organizar, i
 * **Integração Spotify**: Suporte nativo para controle de player via API e Web Playback SDK (Headless).
 * **Editor de Variáveis**: Interface dedicada para gerenciamento de variáveis de ambiente (`.env`).
 * **Autostart Nativo**: Gerenciamento de inicialização automática com o Windows via interface.
+* **Mixer de Áudio**: Controle de volume e mudo de processos individuais via integração com `pycaw`.
 
 ## Instalação e Configuração
 
 A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 
 1. O sistema gerencia os arquivos de configuração `config.json`, `spotify_token.json` e `.env` de forma autônoma. Caso não existam, o backend os criará automaticamente na primeira execução.
-2. Certifique-se de possuir o **Python** (com bibliotecas `flask`, `flask-cors`, `psutil`, `requests`, `python-dotenv`) e o **Node.js** instalados.
+2. Certifique-se de possuir o **Python** (com bibliotecas `flask`, `flask-cors`, `psutil`, `requests`, `python-dotenv`, `pycaw`) e o **Node.js** instalados.
 3. Para iniciar a aplicação, basta executar:
    ```bash
    npm install
@@ -55,12 +56,13 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 ├── package.json
 ├── preload.js
 ├── spotify-browser-preload.js
-└── spotify_token.json
+├── spotify_token.json
+└── window-snapper.js
 ```
 
 ## Dependências
 
-* **Backend**: `flask`, `flask-cors`, `psutil`, `requests`, `python-dotenv`.
+* **Backend**: `flask`, `flask-cors`, `psutil`, `requests`, `python-dotenv`, `pycaw`, `comtypes`.
 * **Frontend**: `electron`, `chrome-paths` (^1.0.1), `puppeteer-core` (^25.1.0).
 
 ## Como utilizar
@@ -74,6 +76,12 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 
 ## 📋 Histórico de Atualizações
 
+### 🔄 Atualização (27/09/2026)
+- Implementação de Mixer de Áudio: Adicionados endpoints no `backend.py` para listar, controlar volume e silenciar processos ativos utilizando a biblioteca `pycaw`.
+- Integração de `window-snapper.js`: Adicionado módulo de gerenciamento de posicionamento de janelas e comunicação via TCP Broker.
+- Atualização da estrutura do projeto: Adição de `window-snapper.js` e organização dos arquivos de interface.
+- Atualização do `.gitignore`: Refinamento das regras de exclusão para incluir builds, logs e arquivos temporários de sistemas de desenvolvimento.
+
 ### 🔄 Atualização (21/09/2026)
 - Melhoria no sistema de execução de processos no Windows: Implementada injeção automática de `cmd.exe /c` para arquivos `.bat` e `.cmd`.
 - Ajuste de robustez para caminhos no Windows: Adicionado tratamento de escape para barras invertidas (`\\`) evitando falhas no `shlex`.
@@ -82,11 +90,4 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 
 ### 🔄 Atualização (12/06/2026)
 - Implementado suporte a auto-start: Adicionado `toggle-startup-state` e `get-startup-state` via IPC no `main.js` para gerenciar atalhos na pasta Inicializar do Windows.
-- Atualização do monitoramento de CPU no `backend.py`: Ajustado intervalo do `psutil` para 0.1s para leituras mais precisas.
-- Refatoração na execução de ferramentas: Adicionada lógica de resolução de caminhos (`exe_path`) para garantir que executáveis sejam encontrados corretamente a partir do diretório de trabalho.
-- Atualização de interface: Adicionado botão de copiar logs no modal e novas abas (Workspaces/Soltas) no `index.html`.
-- Atualização da configuração padrão (`config.json`): Adicionados novos exemplos de ferramentas e grupos de Workspace.
-
-### 🔄 Atualização (12/06/2026)
-- Oti
-... [readme truncado]
+- Atualização do monitoramento de CPU no `backend.py`: Ajustado intervalo do `psutil.cpu_percent` para evitar retornos nulos na inicialização.

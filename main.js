@@ -4,36 +4,123 @@ const { spawn, exec } = require('child_process');
 const puppeteer = require('puppeteer-core');
 const chromePaths = require('chrome-paths');
 const fs = require('fs');
+const net = require('net');
+const WindowSnapper = require('./window-snapper');
+
+// --- TCP Broker for Window Snapping ---
+const snapperClients = new Set();
+const allBounds = {};
+
+function broadcastSnapperMsg(msgObj) {
+    const syncStr = JSON.stringify(msgObj) + '\n';
+    for (const c of snapperClients) {
+        try { c.write(syncStr); } catch (e) {}
+    }
+}
+
+function areConnected(b1, b2) {
+    if (!b1 || !b2) return false;
+    const T = 5; // Strict touch threshold to prevent premature locking
+    const xOverlap = (b1.x - T <= b2.x + b2.width) && (b1.x + b1.width + T >= b2.x);
+    const yOverlap = (b1.y - T <= b2.y + b2.height) && (b1.y + b1.height + T >= b2.y);
+    if (!xOverlap || !yOverlap) return false;
+    
+    const touchLeft = Math.abs(b1.x - (b2.x + b2.width)) <= T;
+    const touchRight = Math.abs((b1.x + b1.width) - b2.x) <= T;
+    const touchTop = Math.abs(b1.y - (b2.y + b2.height)) <= T;
+    const touchBottom = Math.abs((b1.y + b1.height) - b2.y) <= T;
+    
+    return touchLeft || touchRight || touchTop || touchBottom;
+}
+
+function getConnectedGroup(startId) {
+    const visited = new Set();
+    const queue = [startId];
+    visited.add(startId);
+    
+    while(queue.length > 0) {
+        const current = queue.shift();
+        const currentBounds = allBounds[current];
+        if (!currentBounds) continue;
+        
+        for (const [id, bounds] of Object.entries(allBounds)) {
+            if (!visited.has(id)) {
+                if (areConnected(currentBounds, bounds)) {
+                    visited.add(id);
+                    queue.push(id);
+                }
+            }
+        }
+    }
+    return Array.from(visited);
+}
+
+const snapperServer = net.createServer((socket) => {
+    socket.setNoDelay(true);
+    snapperClients.add(socket);
+    
+    // Immediately send current pin state upon connection
+    try {
+        socket.write(JSON.stringify({ type: 'pin-state', isPinned: isPinnedState }) + '\n');
+    } catch(e) {}
+
+    socket.on('data', (data) => {
+        try {
+            const msgs = data.toString().split('\n');
+            msgs.forEach(msg => {
+                if (!msg.trim()) return;
+                const parsed = JSON.parse(msg);
+                if (parsed.type === 'update') {
+                    allBounds[parsed.id] = parsed.bounds;
+                    broadcastSnapperMsg({ type: 'sync', bounds: allBounds });
+                }
+                else if (parsed.type === 'drag') {
+                    const group = getConnectedGroup(parsed.id);
+                    const masterBounds = allBounds[parsed.id];
+                    
+                    if (masterBounds && parsed.bounds) {
+                        const dx = parsed.bounds.x - masterBounds.x;
+                        const dy = parsed.bounds.y - masterBounds.y;
+                        
+                        if (dx !== 0 || dy !== 0) {
+                            for (const id of group) {
+                                if (allBounds[id]) {
+                                    allBounds[id].x += dx;
+                                    allBounds[id].y += dy;
+                                    if (id !== parsed.id) {
+                                        broadcastSnapperMsg({ type: 'force-move', id: id, bounds: allBounds[id] });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (e) {}
+    });
+    socket.on('close', () => snapperClients.delete(socket));
+    socket.on('error', () => snapperClients.delete(socket));
+});
+snapperServer.listen(15555, '127.0.0.1', () => {
+    console.log('[Broker] Window Snapping Server running on 15555');
+});
+// --------------------------------------
 
 // Silencia os alertas irritantes de segurança do Electron no console
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 
 console.log('App starting. Electron version:', process.versions.electron);
 
+
+
 let mainWindow = null;
 let pythonProcess = null;
 let browserProcess = null;
-let tray = null;
+
 let spotifyDeviceId = null;
 let isPinnedState = false;
+let tray = null;
 
-function createTray() {
-    const iconPath = path.join(__dirname, 'icon.ico');
-    const icon = nativeImage.createFromPath(iconPath);
-    tray = new Tray(icon);
-    tray.setToolTip('Tool Manager');
-    
-    const initialMenu = Menu.buildFromTemplate([
-        { label: 'Abrir Tool Manager', click: () => { mainWindow.show(); mainWindow.focus(); } },
-        { type: 'separator' },
-        { label: 'Sair', click: () => app.quit() }
-    ]);
-    tray.setContextMenu(initialMenu);
-    
-    tray.on('click', (event, bounds) => {
-        toggleWindow(bounds);
-    });
-}
 
 const toggleWindow = (trayBounds) => {
     if (mainWindow.isVisible()) {
@@ -52,11 +139,12 @@ function createWindow() {
         height: 480,
         show: false,
         frame: false,
+    skipTaskbar: true,
         fullscreenable: false,
         resizable: false,
         transparent: true,
-        skipTaskbar: true,
-        icon: path.join(__dirname, 'icon.ico'),
+        
+        icon: path.join(__dirname, 'icon.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -80,7 +168,25 @@ function createWindow() {
 
     mainWindow.on('show', () => {
         mainWindow.setAlwaysOnTop(isPinnedState, 'screen-saver');
+        const group = getConnectedGroup('tool_manager');
+        for (const id of group) {
+            if (id !== 'tool_manager') {
+                broadcastSnapperMsg({ type: 'visibility', id: id, visible: true });
+            }
+        }
     });
+
+    mainWindow.on('hide', () => {
+        const group = getConnectedGroup('tool_manager');
+        for (const id of group) {
+            if (id !== 'tool_manager') {
+                broadcastSnapperMsg({ type: 'visibility', id: id, visible: false });
+            }
+        }
+    });
+
+    // Init magnetic snapping
+    new WindowSnapper(mainWindow, 'tool_manager');
 }
 
 async function launchHeadlessPlayer() {
@@ -123,12 +229,54 @@ async function launchHeadlessPlayer() {
     }
 }
 
+
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+    app.quit();
+} else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        if (mainWindow) {
+            if (mainWindow.isVisible()) {
+                mainWindow.hide();
+            } else {
+                mainWindow.show();
+                mainWindow.focus();
+            }
+        }
+    });
+}
+
+
+
 app.whenReady().then(() => {
+    try {
+        const electron = require('electron');
+        const Menu = electron.Menu;
+        const Tray = electron.Tray;
+        const nativeImage = electron.nativeImage;
+        const iconPath = require('path').join(__dirname, 'icon.ico');
+        const trayIcon = nativeImage.createFromPath(iconPath);
+        global.myTray = new Tray(trayIcon);
+        global.myTray.setToolTip('Tool Manager');
+        const ctxMenu = Menu.buildFromTemplate([
+            { label: 'Abrir', click: () => { if(typeof mainWindow !== 'undefined' && mainWindow) { mainWindow.show(); mainWindow.focus(); } } },
+            { type: 'separator' },
+            { label: 'Sair', click: () => { app.quit(); process.exit(0); } }
+        ]);
+        global.myTray.setContextMenu(ctxMenu);
+        global.myTray.on('click', () => {
+            if (typeof mainWindow !== 'undefined' && mainWindow) {
+                if (mainWindow.isVisible()) mainWindow.hide();
+                else { mainWindow.show(); mainWindow.focus(); }
+            }
+        });
+    } catch(e) { console.error('Tray error', e); }
+
     pythonProcess = spawn('python', [path.join(__dirname, 'backend.py')], { detached: false, stdio: 'ignore' });
     
     setTimeout(() => {
         createWindow();
-        createTray();
+        
         mainWindow.show();
         mainWindow.center();
     }, 1000);
@@ -197,7 +345,7 @@ ipcMain.on('open-env-editor', () => {
         height: 500,
         title: 'Editor de Variáveis (.env)',
         autoHideMenuBar: true,
-        icon: path.join(__dirname, 'icon.ico'),
+        icon: path.join(__dirname, 'icon.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
@@ -218,6 +366,7 @@ ipcMain.handle('toggle-always-on-top', (event, isPinned) => {
     if (mainWindow) {
         mainWindow.setAlwaysOnTop(isPinned, 'screen-saver');
     }
+    broadcastSnapperMsg({ type: 'pin-state', isPinned: isPinned });
 });
 
 ipcMain.handle('app-quit', () => {
@@ -257,7 +406,7 @@ ipcMain.on('register-shortcuts', (event, shortcutsMap) => {
 });
 
 ipcMain.handle('show-notification', (event, title, body) => {
-    new Notification({ title, body, icon: path.join(__dirname, 'icon.ico') }).show();
+    new Notification({ title, body, icon: path.join(__dirname, 'icon.png') }).show();
 });
 
 ipcMain.on('update-app-hotkey', () => {

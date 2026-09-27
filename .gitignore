@@ -1,26 +1,41 @@
-# Ambiente / SO
+﻿# Ambiente / SO
 .env
 .env.*
-.flaskenv*
-.flasken
-!.env.example
 .DS_Store
 Thumbs.db
 desktop.ini
+*.lnk
 
-# Arquivos Sensíveis
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Electron / Build / Dist
+dist/
+build/
+out/
+release/
+*.log
+*.exe
+
+# IDEs
+.vscode/
+.idea/
+
+
+# --- Regras Automáticas Adicionais (Git Auto) ---
+.flaskenv*
+.flasken
+!.env.example
 *_token.json
 *token*.json
 secrets.json
 credentials.json
 *.pem
 *.key
-
-# IDEs
-.vscode/
-.idea/
-
-# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -28,22 +43,9 @@ venv/
 .venv/
 env/
 .env/
-build/
-dist/
 *.egg-info/
-*.log
-
-# Node
-node_modules/
-npm-debug.log
-yarn-error.log
-build/
-dist/
 coverage/
-
-# Java
 *.class
-*.log
 *.jar
 *.war
 *.nar
@@ -52,13 +54,9 @@ coverage/
 *.tar.gz
 *.rar
 target/
-build/
 .gradle/
-
-# C++
 *.o
 *.obj
-*.exe
 *.dll
 *.so
 *.dylib
@@ -69,27 +67,16 @@ CMakeFiles/
 cmake_install.cmake
 Makefile
 bin/
-build/
-
-# React / Next.js
-node_modules/
 .pnp
 .pnp.js
-coverage/
-build/
 .next/
-out/
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-
-# Godot
 .godot/
 *.translation
 export_presets.cfg
-
-# Unity
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
@@ -104,13 +91,4 @@ export_presets.cfg
 *.tmp
 *.user
 *.userprefs
-
-# Generic
-build/
-dist/
-*.log
 tmp/
-
-
-# --- Regras Automáticas Adicionais (Git Auto) ---
-*.lnk

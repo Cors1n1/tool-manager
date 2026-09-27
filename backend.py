@@ -660,6 +660,101 @@ def start_auto_tools():
             with app.test_request_context(f'/tools/{tool["id"]}/toggle', method='POST'):
                 toggle_tool(tool['id'])
 
+# --- Audio Mixer Endpoints ---
+
+global_visibility = {"visible": True}
+
+@app.route('/tools/visibility', methods=['GET', 'POST'])
+def handle_visibility():
+    if request.method == 'POST':
+        data = request.json
+        if 'visible' in data:
+            global_visibility['visible'] = data['visible']
+    return jsonify(global_visibility)
+
+@app.route('/audio/sessions', methods=['GET'])
+def get_audio_sessions():
+    try:
+        import pythoncom
+        pythoncom.CoInitialize()
+        from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, IAudioMeterInformation
+        
+        result = []
+        
+        try:
+            devices = AudioUtilities.GetSpeakers()
+            vol = devices.EndpointVolume
+            master_vol = vol.GetMasterVolumeLevelScalar()
+            master_mute = vol.GetMute()
+            result.append({
+                "id": "Master",
+                "name": "Volume Principal",
+                "volume": round(master_vol * 100),
+                "mute": bool(master_mute),
+                "peak": 0.0
+            })
+        except Exception:
+            pass
+
+        sessions = AudioUtilities.GetAllSessions()
+        for session in sessions:
+            if session.Process:
+                name = session.Process.name()
+                volume_interface = session._ctl.QueryInterface(ISimpleAudioVolume)
+                vol = volume_interface.GetMasterVolume()
+                mute = volume_interface.GetMute()
+                
+                try:
+                    meter = session._ctl.QueryInterface(IAudioMeterInformation)
+                    peak = meter.GetPeakValue()
+                except Exception:
+                    peak = 0.0
+                
+                result.append({
+                    "id": name,
+                    "name": name,
+                    "volume": round(vol * 100),
+                    "mute": bool(mute),
+                    "peak": peak
+                })
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/audio/volume', methods=['POST'])
+def set_audio_volume():
+    try:
+        import pythoncom
+        pythoncom.CoInitialize()
+        data = request.json
+        process_name = data.get('id')
+        new_vol = data.get('volume')
+        new_mute = data.get('mute')
+        
+        from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
+        
+        if process_name == "Master":
+            devices = AudioUtilities.GetSpeakers()
+            vol = devices.EndpointVolume
+            if new_vol is not None:
+                vol.SetMasterVolumeLevelScalar(new_vol / 100.0, None)
+            if new_mute is not None:
+                vol.SetMute(1 if new_mute else 0, None)
+            return jsonify({"status": "ok"})
+            
+        sessions = AudioUtilities.GetAllSessions()
+        for session in sessions:
+            if session.Process and session.Process.name() == process_name:
+                volume_interface = session._ctl.QueryInterface(ISimpleAudioVolume)
+                if new_vol is not None:
+                    volume_interface.SetMasterVolume(new_vol / 100.0, None)
+                if new_mute is not None:
+                    volume_interface.SetMute(1 if new_mute else 0, None)
+                # Note: We update all matching sessions (some apps spawn multiple audio sessions)
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     # Initial call to set baseline for cpu_percent(interval=None)
     psutil.cpu_percent(interval=None)

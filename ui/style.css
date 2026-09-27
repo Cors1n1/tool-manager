@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 :root {
-    --bg-main: linear-gradient(145deg, rgba(26, 26, 35, 0.85), rgba(15, 15, 20, 0.95));
+    --bg-main: linear-gradient(145deg, rgba(20, 20, 26, 0.4), rgba(10, 10, 15, 0.5));
     --bg-item: rgba(255, 255, 255, 0.03);
     --bg-item-hover: rgba(255, 255, 255, 0.07);
     --border: rgba(255, 255, 255, 0.05);
@@ -18,7 +18,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
 
 body {
-    background: transparent;
+    background: #050505;
     height: 100vh;
     overflow: hidden;
     user-select: none;
@@ -1251,3 +1251,165 @@ body.theme-spotify-cover::before {
     pointer-events: none;
     transition: background-image 0.8s ease;
 }
+
+/* Custom Wifi Tabs & Layout */
+.tabs-container {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px 0 12px;
+    align-items: center;
+    -webkit-app-region: drag;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: 0.2s;
+    -webkit-app-region: no-drag;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.05);
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.1);
+}
+
+.tab-content {
+    display: none;
+    height: 100%;
+    flex-direction: column;
+}
+
+.tab-content.active {
+    display: flex;
+}
+
+/* Network Tab Info Cards */
+.net-info-card {
+    background: var(--bg-item);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    transition: 0.2s;
+}
+
+.net-info-card:hover {
+    background: var(--bg-item-hover);
+    border-color: rgba(255,255,255,0.1);
+}
+
+.net-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.net-value {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.repair-btn {
+    background: rgba(255, 74, 74, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(255, 74, 74, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+    width: 100%;
+}
+
+.repair-btn:hover {
+    background: var(--danger);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255, 74, 74, 0.4);
+}
+
+/* Radar Tab */
+.radar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.radar-item {
+    background: var(--bg-item);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: 0.2s;
+}
+.radar-item:hover {
+    background: var(--bg-item-hover);
+    border-color: rgba(255,255,255,0.1);
+}
+.radar-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.radar-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px;
+    font-size: 14px;
+    background: rgba(255,255,255,0.02);
+}
+.radar-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+.radar-desc {
+    font-size: 10px;
+    color: var(--text-dim);
+}
+.radar-ping {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+}
+.ping-value {
+    font-size: 13px !important;
+}
+.ping-status {
+    font-size: 10px !important;
+}
+
+.icon-btn { -webkit-app-region: no-drag; }
