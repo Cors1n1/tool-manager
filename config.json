@@ -56,6 +56,17 @@
             "auto_port": false
         },
         {
+            "id": "4f876909-f382-40ec-a377-f0fda2920301",
+            "name": "Monitor",
+            "command": "C:\\Users\\Corsini\\Desktop\\projetos\\sys_monitor\\start.bat",
+            "directory": "C:\\Users\\Corsini\\Desktop\\projetos\\sys_monitor",
+            "auto_start": false,
+            "category": "Geral",
+            "env_vars": "",
+            "hotkey": "",
+            "auto_port": false
+        },
+        {
             "id": "8ad8d879-ab70-49ae-952f-9de77a9b3540",
             "name": "Emprego",
             "command": "cmd.exe /c iniciar.bat",

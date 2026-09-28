@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5555';
+﻿const API_URL = 'http://localhost:5555';
 let tools = [];
 let previousState = {};
 let workspaces = {};
@@ -39,7 +39,7 @@ function setTheme(rgbString) {
         document.documentElement.style.setProperty('--accent-rgb', '0, 229, 255'); // Fallback accent
         localStorage.setItem('themeColor', 'spotify-cover');
         
-        // Se já tiver uma música tocando, pega a cor da capa atual
+        // Se jÃ¡ tiver uma mÃºsica tocando, pega a cor da capa atual
         const coverEl = document.getElementById("spAlbumArt");
         if (coverEl && coverEl.src && coverEl.src !== window.location.href) {
             updateDominantColor(coverEl.src);
@@ -89,7 +89,7 @@ setTimeout(() => {
         const overlay = document.getElementById('loadingOverlay');
         if (overlay) overlay.classList.add('hidden');
     }
-}, 10000); // Fallback de segurança para nunca travar no loading
+}, 10000); // Fallback de seguranÃ§a para nunca travar no loading
 
 
 async function togglePin() {
@@ -121,8 +121,8 @@ async function fetchWeather() {
             const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ipData.latitude}&longitude=${ipData.longitude}&current_weather=true`);
             const wData = await wRes.json();
             if (wData.current_weather) {
-                document.getElementById('dashWeather').innerHTML = `<i class="fa-solid fa-cloud"></i> ${wData.current_weather.temperature}°C`;
-                document.getElementById('dashWeather').title = ipData.city || 'Sua Localização';
+                document.getElementById('dashWeather').innerHTML = `<i class="fa-solid fa-cloud"></i> ${wData.current_weather.temperature}Â°C`;
+                document.getElementById('dashWeather').title = ipData.city || 'Sua LocalizaÃ§Ã£o';
             }
         }
     } catch(e) {
@@ -275,7 +275,7 @@ function createToolItem(tool) {
     
     let portBadge = '';
     if (tool.running && tool.active_port) {
-        portBadge = `<a href="http://localhost:${tool.active_port}" target="_blank" class="port-badge" title="Abrir no navegador">🌐 :${tool.active_port}</a>`;
+        portBadge = `<a href="http://localhost:${tool.active_port}" target="_blank" class="port-badge" title="Abrir no navegador">ðŸŒ :${tool.active_port}</a>`;
     }
 
     let actionButtons = tool.running 
@@ -319,7 +319,7 @@ function renderTools() {
             <div style="text-align: center; color: var(--text-dim); padding-top: 40px; font-size: 12px;">
                 <i class="fa-solid fa-folder-open" style="font-size: 30px; margin-bottom: 15px; opacity: 0.5;"></i>
                 <p>Nenhum projeto ou ferramenta.</p>
-                <p style="margin-top: 10px; opacity: 0.7;">Clique nos ícones no topo para começar.</p>
+                <p style="margin-top: 10px; opacity: 0.7;">Clique nos Ã­cones no topo para comeÃ§ar.</p>
             </div>
         `;
         return;
@@ -401,7 +401,7 @@ function renderTools() {
         looseContainer.addEventListener('drop', handleWsDrop);
 
         if (looseTools.length === 0) {
-            looseContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-dim); font-size: 12px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px; pointer-events: none;"><i class="fa-solid fa-download"></i> Área de ferramentas soltas (Arraste aqui)</div>`;
+            looseContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-dim); font-size: 12px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px; pointer-events: none;"><i class="fa-solid fa-download"></i> Ãrea de ferramentas soltas (Arraste aqui)</div>`;
         } else {
             looseTools.forEach(tool => {
                 looseContainer.appendChild(createToolItem(tool));
@@ -491,7 +491,7 @@ function editWorkspace(oldName) {
 }
 
 function deleteWorkspace(name) {
-    customConfirm(`Tem certeza que deseja excluir a pasta '${name}'?\nAs ferramentas dentro dela voltarão para Geral.`, async () => {
+    customConfirm(`Tem certeza que deseja excluir a pasta '${name}'?\nAs ferramentas dentro dela voltarÃ£o para Geral.`, async () => {
         try {
             const res = await fetch(`${API_URL}/workspaces/${encodeURIComponent(name)}`, {
                 method: 'DELETE'
@@ -620,7 +620,7 @@ function openAddModal(wsName = 'Geral') {
     document.getElementById('toolAutoPort').checked = false;
     document.getElementById('addModal').classList.add('active');
     
-    // Forçar pin durante a edição
+    // ForÃ§ar pin durante a ediÃ§Ã£o
     if (window.api && window.api.toggleAlwaysOnTop) {
         window.api.toggleAlwaysOnTop(true);
     }
@@ -639,7 +639,7 @@ function openEditModal(id) {
     document.getElementById('toolAutoPort').checked = tool.auto_port || false;
     document.getElementById('addModal').classList.add('active');
     
-    // Forçar pin durante a edição
+    // ForÃ§ar pin durante a ediÃ§Ã£o
     if (window.api && window.api.toggleAlwaysOnTop) {
         window.api.toggleAlwaysOnTop(true);
     }
@@ -815,7 +815,7 @@ async function fetchLogs() {
             // Check if user is scrolled to bottom
             const isScrolledToBottom = Math.abs((consoleEl.scrollHeight - consoleEl.clientHeight) - consoleEl.scrollTop) < 5;
             
-            const rawLog = data.join('') || 'Sem logs disponíveis.';
+            const rawLog = data.join('') || 'Sem logs disponÃ­veis.';
             consoleEl.innerHTML = parseLogColors(rawLog);
             
             if (isScrolledToBottom) {
@@ -847,7 +847,7 @@ function parseLogColors(rawText) {
     // Keyword regex highlighting line by line
     const lines = text.split('\n');
     return lines.map(line => {
-        // Se a linha já tiver formatação ANSI forte (ex: span color), não sobrescrevemos a linha toda grosseiramente
+        // Se a linha jÃ¡ tiver formataÃ§Ã£o ANSI forte (ex: span color), nÃ£o sobrescrevemos a linha toda grosseiramente
         if (line.includes('<span style')) return line;
         
         if (/(error|exception|fail)/i.test(line)) {
@@ -946,15 +946,15 @@ if (addModalEl) {
             const file = e.dataTransfer.files[0];
             const filePath = window.api && window.api.getPathForFile ? window.api.getPathForFile(file) : file.path;
             
-            if (!filePath) return; // Algumas vezes o drag de atalhos pode não passar o path direto, mas no Electron desktop geralmente passa.
+            if (!filePath) return; // Algumas vezes o drag de atalhos pode nÃ£o passar o path direto, mas no Electron desktop geralmente passa.
             
-            // Heurística básica: Se tem extensão depois da última barra, é arquivo.
+            // HeurÃ­stica bÃ¡sica: Se tem extensÃ£o depois da Ãºltima barra, Ã© arquivo.
             const isFile = filePath.lastIndexOf('.') > Math.max(filePath.lastIndexOf('\\'), filePath.lastIndexOf('/'));
             
             if (isFile) {
                 document.getElementById('toolCommand').value = filePath;
                 
-                // Extrai o diretório (tudo antes da última barra)
+                // Extrai o diretÃ³rio (tudo antes da Ãºltima barra)
                 const lastSlash = Math.max(filePath.lastIndexOf('\\'), filePath.lastIndexOf('/'));
                 const dirPath = filePath.substring(0, lastSlash);
                 if (dirPath) {
@@ -968,7 +968,7 @@ if (addModalEl) {
                     document.getElementById('toolName').value = name;
                 }
             } else {
-                // É uma pasta
+                // Ã‰ uma pasta
                 document.getElementById('toolDir').value = filePath;
                 
                 if (!document.getElementById('toolName').value) {
@@ -1166,7 +1166,7 @@ async function checkSpotifyStatus() {
             document.getElementById("spotifyConnectBar").style.display = "flex";
             document.getElementById("spotifyPlayerBar").style.display = "none";
             stopSpotifyPolling();
-            checkAppLoaded(); // Se não estiver conectado, já pode liberar a tela de loading
+            checkAppLoaded(); // Se nÃ£o estiver conectado, jÃ¡ pode liberar a tela de loading
         }
     } catch(e) {
         console.error("Spotify status error:", e);
@@ -1402,7 +1402,7 @@ function updateDominantColor(imgSrc) {
     img.src = imgSrc;
 }
 
-// Inicializa quando o arquivo carregar (sem delay para ser instantâneo)
+// Inicializa quando o arquivo carregar (sem delay para ser instantÃ¢neo)
 initSpotifyPlayer();
 
 // ENV Modal Handlers
@@ -1417,4 +1417,7 @@ if (window.api && window.api.onAppHotkeyChanged) {
         loadTools();
     });
 }
+
+
+
 

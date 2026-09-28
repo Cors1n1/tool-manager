@@ -77,17 +77,16 @@ A instalação e a configuração deste projeto são **AUTOMÁTICAS**.
 ## 📋 Histórico de Atualizações
 
 ### 🔄 Atualização (27/09/2026)
+- Atualização do motor de comunicação do `main.js`: Adicionado broadcast de sincronização de limites (`bounds`) para o serviço de snapping.
+- Otimização do `renderer.js`: Correções de codificação (caracteres especiais), melhorias na renderização de badges de porta e ajustes na UX da lista de ferramentas.
+- Atualização do `config.json`: Adicionado o novo módulo "Monitor" às configurações de ferramentas.
+
+### 🔄 Atualização (27/09/2026)
 - Implementação de Mixer de Áudio: Adicionados endpoints no `backend.py` para listar, controlar volume e silenciar processos ativos utilizando a biblioteca `pycaw`.
 - Integração de `window-snapper.js`: Adicionado módulo de gerenciamento de posicionamento de janelas e comunicação via TCP Broker.
 - Atualização da estrutura do projeto: Adição de `window-snapper.js` e organização dos arquivos de interface.
 - Atualização do `.gitignore`: Refinamento das regras de exclusão para incluir builds, logs e arquivos temporários de sistemas de desenvolvimento.
 
 ### 🔄 Atualização (21/09/2026)
-- Melhoria no sistema de execução de processos no Windows: Implementada injeção automática de `cmd.exe /c` para arquivos `.bat` e `.cmd`.
-- Ajuste de robustez para caminhos no Windows: Adicionado tratamento de escape para barras invertidas (`\\`) evitando falhas no `shlex`.
-- Atualização do `.gitignore`: Adicionada regra para ignorar arquivos de atalho (`.lnk`).
-- Atualização do `config.json`: Inclusão de novas ferramentas de automação (Cerebro, Sound Pad, Emprego, DuckDNS, Wifi).
-
-### 🔄 Atualização (12/06/2026)
-- Implementado suporte a auto-start: Adicionado `toggle-startup-state` e `get-startup-state` via IPC no `main.js` para gerenciar atalhos na pasta Inicializar do Windows.
-- Atualização do monitoramento de CPU no `backend.py`: Ajustado intervalo do `psutil.cpu_percent` para evitar retornos nulos na inicialização.
+- Melhoria no sistema de e
+... [readme truncado]

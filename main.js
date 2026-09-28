@@ -92,6 +92,7 @@ const snapperServer = net.createServer((socket) => {
                                     }
                                 }
                             }
+                            broadcastSnapperMsg({ type: 'sync', bounds: allBounds });
                         }
                     }
                 }

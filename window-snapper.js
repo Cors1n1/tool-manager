@@ -1,3 +1,13 @@
+﻿if (process.stdout && process.stdout.on) {
+    process.stdout.on('error', function(err) {
+        if (err.code === 'EPIPE') return;
+    });
+}
+if (process.stderr && process.stderr.on) {
+    process.stderr.on('error', function(err) {
+        if (err.code === 'EPIPE') return;
+    });
+}
 const net = require('net');
 
 class WindowSnapper {
@@ -24,6 +34,15 @@ class WindowSnapper {
         // Trigger magnetic snap on mouse release
         this.mainWindow.on('moved', () => {
             if (this.isSnapping) return;
+            
+            if (this.expectedBounds) {
+                const bounds = this.mainWindow.getBounds();
+                if (Math.abs(bounds.x - this.expectedBounds.x) <= 5 && Math.abs(bounds.y - this.expectedBounds.y) <= 5) {
+                    this.expectedBounds = null;
+                    return;
+                }
+            }
+            
             this.expectedBounds = null; // Reset
             this.handleSnap();
             this.sendBounds();
@@ -35,8 +54,8 @@ class WindowSnapper {
             
             // If this will-move is caused by our programmatic setBounds, ignore it
             if (this.expectedBounds && 
-                Math.abs(newBounds.x - this.expectedBounds.x) <= 2 && 
-                Math.abs(newBounds.y - this.expectedBounds.y) <= 2) {
+                Math.abs(newBounds.x - this.expectedBounds.x) <= 5 && 
+                Math.abs(newBounds.y - this.expectedBounds.y) <= 5) {
                 return;
             }
             
@@ -195,3 +214,6 @@ class WindowSnapper {
 }
 
 module.exports = WindowSnapper;
+
+
+
